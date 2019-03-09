@@ -32,7 +32,7 @@ public class FormatUtils {
 					StandardCharsets.UTF_8);
 			res = res.stream()
 					.filter(v->!v.contains("#")||v.length()<2)
-					.map(v->v.replaceAll("\\(|\\)|",""))
+					.map(v->v.replaceAll("\\(|\\)",""))
 					.map(v->v.replaceAll(" ",""))
 					.collect(Collectors.toList());
 		} catch (IOException e) {

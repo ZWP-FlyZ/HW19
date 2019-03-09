@@ -5,11 +5,25 @@ import java.time.Instant;
 import java.util.Map;
 
 import com.huawei.app.model.Car;
+import com.huawei.app.model.CarStatus;
 import com.huawei.app.model.Cross;
 import com.huawei.app.model.Road;
 
 public class Application {
 
+	/**
+	 * 
+	 * @author zwp12
+	 * >保存全局信息描述
+	 */
+	public static class Context{
+		
+	    public Map<Integer,Car> cars = null;
+	    public Map<Integer,Road> roads = null;
+	    public Map<Integer,Cross> crosses = null;
+		public Map<Integer,CarStatus>  statues=null;
+	}
+	
 	public static void run(String[] args) {
 		
         String carPath = args[0];
@@ -20,20 +34,22 @@ public class Application {
         System.out.println("carPath = " + carPath + "\nroadPath = " + roadPath +
         		"\ncrossPath = " + crossPath + "\nanswerPath = " + answerPath);
         
-        Map<Integer,Car> cars = 
+        Context ctx = new Context();
+        
+        ctx.cars = 
         		FormatUtils.converCars(FormatUtils.loadAndFormat(carPath)); 
-        Map<Integer,Road> roads = 
+        ctx.roads = 
         		FormatUtils.converRoad(FormatUtils.loadAndFormat(roadPath)); 
-        Map<Integer,Cross> crosses = 
+        ctx.crosses = 
         		FormatUtils.converCross(FormatUtils.loadAndFormat(crossPath));
         
-        System.out.println("load finished!\ncars.size="+cars.size()+
-        		"\nroads.size="+roads.size()+"\ncrosses.size="+crosses.size());        
+        System.out.println("load finished!\ncars.size="+ctx.cars.size()+
+        		"\nroads.size="+ctx.roads.size()+"\ncrosses.size="+ctx.crosses.size());        
         
         Instant now = Instant.now();
         
         // 完成cars、roads、crosses的一些基础工作
-        preprocess(cars,roads,crosses);
+        preprocess(ctx);
         // 创建规划器
         // 创建模拟器
         // 注册规划器
@@ -44,16 +60,15 @@ public class Application {
         System.out.println("running time:"+runingtime);
         
         // 记录所有车辆的行程
-        FormatUtils.saveAnswer(answerPath, cars.values());
+        FormatUtils.saveAnswer(answerPath,  ctx.cars.values());
 	}
 	
 	
-	private static void preprocess( Map<Integer,Car> cars ,Map<Integer,Road> roads,
-			Map<Integer,Cross> crosses) {
+	private static void preprocess(Context ctx) {
 		
 		// 设置所有Cross中可以驶出的roadId
-		crosses.values().stream()
-		.forEach(v->v.setConnOutRoadIds(roads));
+		ctx.crosses.values().stream()
+		.forEach(v->v.setConnOutRoadIds(ctx.roads));
 	}
 	
 	
