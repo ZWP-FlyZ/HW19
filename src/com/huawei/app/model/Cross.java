@@ -1,5 +1,6 @@
 package com.huawei.app.model;
 
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -21,11 +22,16 @@ public class Cross {
 	// 当无出去的路时，为-1;
 	private int[] connOutRoadIds= {-1,-1,-1,-1};
 	// 无相连的Cross时，为-1;
-	private int[] connCrossIds;// 按顺时针排序Cross的ID
+//	private int[] connCrossIds;// 按顺时针排序Cross的ID
 	
 	public Cross(int crossId,int[] connRoadIds) {
 		this.crossId=crossId;
 		this.connRoadIds=connRoadIds;
+	}
+	
+	public Cross(int[] args) {
+		this.crossId=args[0];
+		this.connRoadIds=Arrays.copyOfRange(args, 1, 5);
 	}
 
 	/**
@@ -88,10 +94,7 @@ public class Cross {
 		return connRoadIds;
 	}
 
-	public int[] getConnCrossIds() {
-		return connCrossIds;
-	}
-	
+
 	
 	
 	

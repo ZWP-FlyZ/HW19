@@ -50,6 +50,14 @@ public class Road {
 		this.isDu=isDu;
 	}
 	
+	public Road(int[] args) {
+		this.roadId=args[0];this.roadLength=args[1];
+		this.maxSpeed=args[2];this.chanelCot=args[3];
+		this.fromCrossId=args[4];this.toCrossId=args[5];
+		this.isDu=args[6];
+	}	
+	
+	
 	public boolean isDuplex() {
 		return this.isDu==1;
 	}
