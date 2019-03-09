@@ -36,23 +36,24 @@ public class Cross {
 
 	/**
 	 * 
-	 * >根据当前方向车辆进入计算下向前、向左、向右的RoadId
+	 * >根据当前车辆行驶路径相对于路口的位置，计算下向前、向左、向右的RoadId
+	 * > 可以通过getDirectionByRoadId 计算roadDirectInCross
 	 * >若放回-1 表示选择的方向上无Road或者无效输入
 	 * @param orderId 
 	 * @return 
 	 */
-	public int getNextRoadId(int currentDirect, int needNextDriveDirect) {
-		if(currentDirect<Direction.N||currentDirect>Direction.W||
+	public int getNextRoadId(int roadDirectInCross, int needNextDriveDirect) {
+		if(roadDirectInCross<Direction.N||roadDirectInCross>Direction.W||
 				needNextDriveDirect<DriveDirection.LEFT||needNextDriveDirect<DriveDirection.RIGHT)
 			return -1;// 无效方向
 		else
-			return connOutRoadIds[(currentDirect+4+needNextDriveDirect)%4];
+			return connOutRoadIds[(roadDirectInCross+6+needNextDriveDirect)%4];
 	}
 	
 
 	/**
-	 *  >通过出路口的roadId计算该Road相对于路口的方向
-	 *  >例如知道路在上方，但不能说from到to的绝对方向
+	 *  >通过出路口的roadId计算该Road相对于路口的位置
+	 *  >例如知道路在上方
 	 * @param roadId
 	 * @return dirction
 	 * 
@@ -67,16 +68,41 @@ public class Cross {
 	}
 	
 	
+	/**
+	 * >根据进入的Road的相对于路口的位置和出去的RoadId判断，该行驶属于向左、直行、向右中的哪种
+	 * >通过 getDirectionByRoadId计算过inRoadDirection
+	 * @param inRoadId
+	 * @param outRoadId
+	 * @return DriveDirection.LEFT RIGHT FORWARD
+	 */
+	public int getTurnDirection(int inRoadDirection,int outRoadId) {
+		if(connOutRoadIds[(inRoadDirection+1)%4]==outRoadId) 
+			return DriveDirection.LEFT;
+		else if(connOutRoadIds[(inRoadDirection+2)%4]==outRoadId)
+			return DriveDirection.FOWARD;
+		else if(connOutRoadIds[(inRoadDirection+3)%4]==outRoadId)
+			return DriveDirection.RIGHT;
+		else 
+			throw new IllegalArgumentException("outRoadId not in connOutRoadIds");
+	}
+	
 	
 	
 	/**
-	 * > 通过这个函数、更新connOutRoadIds中的roadId
-	 * @param dirction 绝对方向
-	 * @param roadId 
+	 * > 这个函数更新connOutRoadIds中的roadId
+	 * 
 	 */
-	public void setConnOutRoadIds(int dirction,int roadId) {
-		connOutRoadIds[dirction]=roadId;
+	public void setConnOutRoadIds(Map<Integer,Road> roads) {
+		int rid;
+		Road rd = null;
+		for(int i=0;i<4;i++) {
+			if((rid=connRoadIds[i])<0) continue;
+			rd = roads.get(rid);
+			if(rd.isDuplex()||rd.getFromCrossId()==crossId) 
+				connOutRoadIds[i]=rid;	
+		}
 	}
+	
 
 	/**
 	 * 

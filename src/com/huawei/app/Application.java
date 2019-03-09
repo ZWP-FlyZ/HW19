@@ -31,6 +31,9 @@ public class Application {
         		"\nroads.size="+roads.size()+"\ncrosses.size="+crosses.size());        
         
         Instant now = Instant.now();
+        
+        // 完成cars、roads、crosses的一些基础工作
+        preprocess(cars,roads,crosses);
         // 创建规划器
         // 创建模拟器
         // 注册规划器
@@ -43,5 +46,15 @@ public class Application {
         // 记录所有车辆的行程
         FormatUtils.saveAnswer(answerPath, cars.values());
 	}
+	
+	
+	private static void preprocess( Map<Integer,Car> cars ,Map<Integer,Road> roads,
+			Map<Integer,Cross> crosses) {
+		
+		// 设置所有Cross中可以驶出的roadId
+		crosses.values().stream()
+		.forEach(v->v.setConnOutRoadIds(roads));
+	}
+	
 	
 }

@@ -19,9 +19,9 @@ public class Road {
 	private int toCrossId;// 终点路口
 	private int isDu ;// 是否为双向通道
 	
-	//从当前from到to节点推出绝对方向
-	//如果时双向通道需要变更
-	private int direction;
+//	//从当前from到to节点推出绝对方向
+//	//如果时双向通道需要变更
+//	private int direction;
 	
 	// 从from 到 to 方向的所有车道
 	// 默认车道
@@ -106,37 +106,32 @@ public class Road {
 	
 	
 	
-	/**
-	 *  >由相连crossId路口推出当前路从from到to的绝对方向。
-	 * @param roadDirection
-	 * @param crossId
-	 */
-	public void updateDirection(int roadDirection,int crossId) {
-		if(isDuplex()&&toCrossId==crossId) 
-			// 反向处理
-			direction = (roadDirection+2)%4;
-		if(fromCrossId!=crossId) 
-			throw new IllegalArgumentException("fromCrossId !=crossId err");
-		direction = roadDirection;
-	}
-	
-	
-	/**
-	 * 
-	 * >计数以crossId作为进入路口时，当前路相对于路口的方向
-	 * 
-	 * @param roadDirection
-	 * @param crossId
-	 */
-	
-	public int getInDirection(int crossId) {
-		if(isDuplex()&&fromCrossId==crossId) 
-			// 反向处理
-			return (direction+2)%4;
-		if(fromCrossId!=crossId) 
-			throw new IllegalArgumentException("fromCrossId !=crossId err");
-		return direction;
-	}
+//	/**
+//	 *  >更新当前路从from到to的绝对方向。
+//	 * @param roadDirection
+//	 * @param crossId
+//	 */
+//	public void updateDirection(Cross crosse) {
+//		direction = crosse.getDirectionByRoadId(getRoadId());
+//	}
+//	
+//	
+//	/**
+//	 * 
+//	 * >计数以crossId作为进入路口时，当前路相对于路口的方向
+//	 * 
+//	 * @param roadDirection
+//	 * @param crossId
+//	 */
+//	
+//	public int getInDirection(int crossId) {
+//		if(isDuplex()&&fromCrossId==crossId) 
+//			// 反向处理
+//			return (direction+2)%4;
+//		if(fromCrossId!=crossId) 
+//			throw new IllegalArgumentException("fromCrossId !=crossId err");
+//		return direction;
+//	}
 	
 	
 	
@@ -153,6 +148,39 @@ public class Road {
 		for(int i=0;i<chanelCot;i++)
 			toChannels[i]= new RoadChannel(roadId, i, maxSpeed, roadLength);
 	}
-	
 
+	public Integer getRoadId() {
+		return roadId;
+	}
+
+	public int getRoadLength() {
+		return roadLength;
+	}
+
+	public int getMaxSpeed() {
+		return maxSpeed;
+	}
+
+	public int getChanelCot() {
+		return chanelCot;
+	}
+
+	public int getFromCrossId() {
+		return fromCrossId;
+	}
+
+	public int getToCrossId() {
+		return toCrossId;
+	}
+
+	public int getIsDu() {
+		return isDu;
+	}
+
+//	public int getDirection() {
+//		return direction;
+//	}
+	
+	
+	
 }
