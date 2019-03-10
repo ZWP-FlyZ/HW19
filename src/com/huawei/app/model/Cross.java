@@ -52,18 +52,18 @@ public class Cross {
 	
 
 	/**
-	 *  >通过出路口的roadId计算该Road相对于路口的位置
+	 *  >通过路口的roadId计算该Road相对于路口的位置
 	 *  >例如知道路在上方
 	 * @param roadId
 	 * @return dirction
 	 * 
 	 */
-	public int getDirectionByRoadId(int outRoadId) {
+	public int getDirectionByRoadId(int roadId) {
 		int res = 0;
 		for(;res<4;res++) 
-			if(connRoadIds[res]==outRoadId) break;
+			if(connRoadIds[res]==roadId) break;
 		if (res==4) 
-			throw new IllegalArgumentException("outRoadId not in connRoadIds");
+			throw new IllegalArgumentException("roadId not in connRoadIds");
 		return res;
 	}
 	
@@ -85,7 +85,11 @@ public class Cross {
 		else 
 			throw new IllegalArgumentException("outRoadId not in connOutRoadIds");
 	}
+
 	
+	public int getTurnDireByRoad(int inRoadId,int outRoadId) {
+		return getTurnDirection(getDirectionByRoadId(inRoadId),outRoadId);
+	}
 	
 	
 	/**

@@ -17,7 +17,7 @@ public class RoadChannel {
 	private int cMaxSpeed;
 	// 车道的长度、与道路的长度相同
 	private int channelLength;
-	private Car[] channel =null;
+	private CarStatus[] channel =null;
 	
 	public RoadChannel(int roadId,int channelId,int maxSpeed,int channelLength) {
 		this.roadId=roadId;this.channelId=channelId;
@@ -56,9 +56,9 @@ public class RoadChannel {
 	 * lazy 生成车道空间
 	 * @return
 	 */
-	public Car[] getChanel() {
+	public CarStatus[] getChanel() {
 		if(channel==null)
-			channel = new Car[channelLength]; 
+			channel = new CarStatus[channelLength]; 
 		return channel;
 	}
 
