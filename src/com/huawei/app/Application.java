@@ -60,7 +60,7 @@ public class Application {
         System.out.println("running time:"+runingtime);
         
         // 记录所有车辆的行程
-        FormatUtils.saveAnswer(answerPath,  ctx.cars.values());
+        FormatUtils.saveAnswer(answerPath,  ctx.statues.values());
 	}
 	
 	

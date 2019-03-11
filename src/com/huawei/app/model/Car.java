@@ -1,8 +1,5 @@
 package com.huawei.app.model;
 
-import java.util.LinkedList;
-import java.util.List;
-
 /**
  * 
  * @author zwp12
@@ -18,9 +15,7 @@ public class Car {
 	private int maxSpeed;// 车辆最高速度
 	private int startTime;//出发时刻
 	
-	private int relStartTime;// 真实出发时间
-	// 记录所有路过的RoadId
-	private List<Integer> passedRoadRec= new LinkedList<>();
+
 	
 	public Car(int carId,int oriCrossId,int desCrossId,
 			int maxSpeed,int startTime) {
@@ -34,27 +29,6 @@ public class Car {
 		this.desCrossId=args[2];this.maxSpeed=args[3];
 		this.startTime=args[4];
 	}	
-	
-
-	// 添加车辆经过的roadId
-	public void addPassedRoad(int roadId) {
-
-		passedRoadRec.add(roadId);
-	}
-
-	/**
-	 *  >生成当前汽车的行程
-	 * @return
-	 */
-	public String getReport() {
-		StringBuilder sb =new StringBuilder();
-		sb.append("(");
-		sb.append(carId);
-		sb.append(","+relStartTime);
-		passedRoadRec.forEach(v->sb.append(","+v));
-		sb.append(")");
-		return sb.toString();
-	}
 	
 
 	public Integer getCarId() {
@@ -80,20 +54,6 @@ public class Car {
 	public int getStartTime() {
 		return startTime;
 	}
-
-
-	public int getRelStartTime() {
-		return relStartTime;
-	}
-	
-	public void setRelStartTime(int relStartTime) {
-		this.relStartTime = relStartTime;
-	}
-
-	public List<Integer> getPassedRoadRec() {
-		return passedRoadRec;
-	}
-	
 
 	
 }

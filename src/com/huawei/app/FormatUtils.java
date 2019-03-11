@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.huawei.app.model.Car;
+import com.huawei.app.model.CarStatus;
 import com.huawei.app.model.Cross;
 import com.huawei.app.model.Road;
 
@@ -97,7 +98,7 @@ public class FormatUtils {
 	 *  >将结果写回anwser.txt 中
 	 */
 	private final static String head = "#(carId,StartTime,RoadId...)";
-	public static void saveAnswer(String path,Collection<Car> cars) {
+	public static void saveAnswer(String path,Collection<CarStatus> cars) {
 		try {
 			File f  = Paths.get(path).toFile();
 			if(!f.exists()) f.createNewFile();
@@ -105,7 +106,7 @@ public class FormatUtils {
 					= new BufferedWriter(new FileWriter(f))){
 				bw.write(head+"\n");
 				
-				for(Car c:cars)bw.write(c.getReport()+"\n");
+				for(CarStatus c:cars)bw.write(c.getReport()+"\n");
 			}
 
 		} catch (IOException e) {

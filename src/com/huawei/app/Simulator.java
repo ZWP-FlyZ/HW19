@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
 
+import org.apache.log4j.Logger;
+
 import com.huawei.app.Application.Context;
 import com.huawei.app.model.Car;
 import com.huawei.app.model.CarStatus;
@@ -34,6 +36,7 @@ import com.huawei.app.model.Road;
  */
 public class Simulator {
 
+	private static final Logger logger = Logger.getLogger(Simulator.class);
 	private Context ctx = null;
     private Map<Integer,Car> cars = null;
     private Map<Integer,Road> roads = null;
@@ -50,12 +53,15 @@ public class Simulator {
     
     
     // 当前系统时间
-    private int curSYT = 0;
+    private int curSAT = 0;
     
     // 记录每一时刻内，位置更新和路口调度的计数
     // 若无任何更新，则可能存在死锁，结束模拟
     private int modCot = 0;
     
+    // 在道路上行驶的车辆数量，
+    // 用于控制模拟器结束
+    private int remCarCot = 0;
     
     //规划器
     Planner planner = null;
@@ -99,24 +105,94 @@ public class Simulator {
     		// 添加准备上路的车辆
     		schedulingQue.add(cs);
     	}); 
-    	
     	ctx.statues=statues;
+    	// 获得车辆总数
+    	remCarCot = cars.size();
+    	// 设置系统时间为车辆最开始上路时间
+    	if(remCarCot>0)
+    		curSAT = schedulingQue.peek().curSAT;
+    	
+    	
     	
     }
     
     /**
-     * >创建状态集
+     * >执行模拟过程，返回模拟总时间
+     * 
      * @return
      */
-    private Map<Integer,CarStatus> createStatus(){
-    	Map<Integer,CarStatus> res = new HashMap<>();
-    	Car car = null;
-    	for(Integer cId:cars.keySet()) {
-    		car = cars.get(cId);
-    		res.put(cId,new CarStatus(cId, car, car.getStartTime()));
-    	}
-    	return res;
+    public int run() {
+    	logger.info("Simulator start run,AST="+curSAT+", car.size="+remCarCot);
+    	CarStatus cs = null;
+    	while(true) {
+    		// 当前模拟器中还有车辆在行驶
+    		
+    		// 重置操作计数
+    		modCot=0;
+    		
+    		// 首先处理道路中处于RUNNING行为的车辆位置更新
+    		while(!runningQue.isEmpty()&&
+    			(cs=runningQue.peek()).curSAT==curSAT) {
+    			// 从running队列中取出当前时刻要更新位置的车辆
+    			runningQue.poll();
+    			// 更新cs的状态
+    			cs = updateRunningCarStatus(cs);
+    			if(cs.action==CarActions.RUNNING)
+    				// 如果还没有到达变道区，
+    				runningQue.add(cs);
+    			else if(cs.action==CarActions.SCHEDULING)
+    				// 如果到达变道区，加入到running队列中
+    				schedulingQue.add(cs);
+    			
+    		}
+    		
+    		
+    		// 处理路口调度的车
+    		while(!schedulingQue.isEmpty()&&
+    			(cs=schedulingQue.peek()).curSAT==curSAT) {
+    			// 从scheduling中取出要路口调度的车
+    			schedulingQue.poll();
+    			// 将车进行路口调度
+    			cs = schedulingCarStatus(cs);
+    			if(cs.action==CarActions.RUNNING)
+    				// 路口调度成功，继续道路行驶
+    				runningQue.add(cs);
+    			else if(cs.action==CarActions.SCHEDULING)
+    				// 上一时刻车辆通过路口失败，需要继续等待路口调度
+    				schedulingQue.add(cs);
+    			else if(cs.action==CarActions.STOP) {
+    				// 该车到达终点
+        			remCarCot--;
+        			logger.info("Car:"+cs.carId+"->Cross:"+
+        					cs.car.getDesCrossId()+"->time:"+curSAT);
+    			}
+    			
+    			
+    		}
+    		
+    		logger.info("Simulator modCot="+modCot);
+    		if(modCot==0) {logger.info("Simulator may be dead locked!");}
+    		if(remCarCot>0) curSAT++;//继续执行模拟
+    		else break;// 正常结束
+    		
+    	}// end while
+    	logger.info("Simulator finished,AST="+curSAT);
+    	
+    	
+    	
+    	return curSAT;
     }
+    
+
+    private CarStatus updateRunningCarStatus(CarStatus curCarStatus) {
+    	return null;
+    }
+
+    private CarStatus schedulingCarStatus(CarStatus curCarStatus) {
+    	return null;
+    }
+    
+    
     
     /*
      * >创建T时间的残影车用于占位

@@ -1,5 +1,8 @@
 package com.huawei.app.model;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * 
  * @author zwp12
@@ -11,6 +14,11 @@ public class CarStatus implements Comparable<CarStatus>{
 
 	public int carId;//车辆ID
 	public Car car;
+	
+	public int relStartTime;// 真实出发时间
+	// 记录所有路过的RoadId
+	private List<Integer> passedRoadRec= new LinkedList<>(); 
+	
 	//在当前道路上该车最大可行的速度
 	//由该速度确定是否切换RUNNING为SCHEDULING
 	// min(car.maxspeed,road.maxspeed)
@@ -71,6 +79,29 @@ public class CarStatus implements Comparable<CarStatus>{
 		this.carId = carId;this.car=car;
 		this.curSAT = SAT;
 	}
+	
+	
+	
+	// 添加车辆经过的roadId
+	public void addPassedRoad(int roadId) {
+
+		passedRoadRec.add(roadId);
+	}
+
+	/**
+	 *  >生成当前汽车的行程
+	 * @return
+	 */
+	public String getReport() {
+		StringBuilder sb =new StringBuilder();
+		sb.append("(");
+		sb.append(carId);
+		sb.append(","+relStartTime);
+		passedRoadRec.forEach(v->sb.append(","+v));
+		sb.append(")");
+		return sb.toString();
+	}
+	
 	
 	
 	@Override
