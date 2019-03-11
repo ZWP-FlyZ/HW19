@@ -23,9 +23,11 @@ public class CarStatus implements Comparable<CarStatus>{
 	//由该速度确定是否切换RUNNING为SCHEDULING
 	// min(car.maxspeed,road.maxspeed)
 	public int curRoadSpeed;
-	// 与前车有关的行驶速度
-//	// min(curRoadSpeed,curMaxSpeed)
-//	public int curMaxSpeed;// 当前行驶的速度
+
+	// 最近一个路过的路口
+	public int frmCrossId;
+	// 将要驶向的路口ID
+	public int tagCrossId;
 	public int curRoadId;//当前行驶的RoadId
 	public int curChannelId;//当前行驶的通道Id
 	

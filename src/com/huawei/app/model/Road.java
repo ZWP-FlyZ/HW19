@@ -104,37 +104,18 @@ public class Road {
 		
 	}
 	
-	
-	
-//	/**
-//	 *  >更新当前路从from到to的绝对方向。
-//	 * @param roadDirection
-//	 * @param crossId
-//	 */
-//	public void updateDirection(Cross crosse) {
-//		direction = crosse.getDirectionByRoadId(getRoadId());
-//	}
-//	
-//	
-//	/**
-//	 * 
-//	 * >计数以crossId作为进入路口时，当前路相对于路口的方向
-//	 * 
-//	 * @param roadDirection
-//	 * @param crossId
-//	 */
-//	
-//	public int getInDirection(int crossId) {
-//		if(isDuplex()&&fromCrossId==crossId) 
-//			// 反向处理
-//			return (direction+2)%4;
-//		if(fromCrossId!=crossId) 
-//			throw new IllegalArgumentException("fromCrossId !=crossId err");
-//		return direction;
-//	}
-	
-	
-	
+	/**
+	 * >通过道路一边的crossId计算另一边的CrossId
+	 * 
+	 * @param oriCrossId
+	 * @return
+	 */
+	public int getAnotherCrossId(int oneCrossId) {
+		if(fromCrossId==oneCrossId) return toCrossId;
+		else if(toCrossId==oneCrossId) return fromCrossId;
+		else 
+			throw new IllegalArgumentException(oneCrossId+" not in Road "+roadId);
+	}
 	
 	
 	private void initFromRoadChannels() {
@@ -176,6 +157,8 @@ public class Road {
 	public int getIsDu() {
 		return isDu;
 	}
+
+
 
 //	public int getDirection() {
 //		return direction;
