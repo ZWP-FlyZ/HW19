@@ -6,9 +6,9 @@ public class MainTest {
 
 	static String basePath = "/home/zwp/work/huawei2019/train";
 //	static String basePath = "E:/huawei2019/train";
-    static String carPath = basePath+"/Car.txt";
-    static String roadPath = basePath+"/Road.txt";
-    static String crossPath = basePath+"/Cross.txt";
+    static String carPath = basePath+"/car.txt";
+    static String roadPath = basePath+"/road.txt";
+    static String crossPath = basePath+"/cross.txt";
     static String answerPath = basePath+"/answer.txt";
     
 	public static void main(String[] args) {

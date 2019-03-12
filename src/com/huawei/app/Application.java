@@ -51,7 +51,7 @@ public class Application {
         // 完成cars、roads、crosses的一些基础工作
         preprocess(ctx);
         // 创建规划器
-        PathPlanner planner = new PathPlanner(ctx);
+        StaticPathPlanner planner = new StaticPathPlanner(ctx);
         // 创建模拟器
         Simulator sim = new Simulator(ctx);
         // 注册规划器
@@ -59,8 +59,13 @@ public class Application {
         // 初始化
         planner.init();
         sim.init();
+        ctx.cars.keySet().forEach(v->{
+        	System.out.println(v+":"+planner.showPath(v));
+        });
         // 运行模拟器产生运行结果
         sim.run();
+
+        
         long runingtime = Duration.between(now, Instant.now()).toMillis();
         
         System.out.println("running time:"+runingtime);

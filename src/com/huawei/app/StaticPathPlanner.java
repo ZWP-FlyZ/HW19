@@ -10,15 +10,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
-
 import com.huawei.app.Application.Context;
 import com.huawei.app.model.Car;
 import com.huawei.app.model.Cross;
 import com.huawei.app.model.Planner;
 import com.huawei.app.model.Road;
 
-public class PathPlanner implements Planner {
+public class StaticPathPlanner implements Planner {
 
 
 	private Context ctx = null;
@@ -43,7 +41,7 @@ public class PathPlanner implements Planner {
     }
     
     
-    public PathPlanner(Context ctx){
+    public StaticPathPlanner(Context ctx){
     	this.ctx= ctx; 
     	cars = ctx.cars;
     	roads=ctx.roads;
@@ -185,7 +183,6 @@ public class PathPlanner implements Planner {
 	
 	
 	
-	
 	@Override
 	public int next(int carId, int curCrossId) {
 		// TODO Auto-generated method stub
@@ -198,7 +195,23 @@ public class PathPlanner implements Planner {
 		return p.nextRoadId;
 	}
 
-	
+	public String showPath(int carId) {
+		StringBuffer sb = new StringBuffer();
+		CarPathNode node = initCarPath.get(carId);
+		while(node!=null) {
+			sb.append("("+node.curCrossId+","+node.nextRoadId+")->");
+			node=node.next;
+		}
+		return sb.toString();
+	}
+
+
+
+	@Override
+	public boolean feed(int carId, int crossId, int remCars) {
+		// TODO Auto-generated method stub
+		return remCars<2;
+	}
 	
 
 

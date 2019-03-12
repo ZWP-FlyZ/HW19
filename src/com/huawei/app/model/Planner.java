@@ -18,5 +18,12 @@ public interface Planner {
 	public int next(int carId,int curCrossId);
 	
 
+	/**
+	 * 当前准备上路的车,根据路况返回是否可以上路
+	 * remCars 表示当期模拟器中车辆的数量
+	 * @return
+	 */
+	public boolean feed(int carId,int crossId,int remCars);
+	
 	
 }

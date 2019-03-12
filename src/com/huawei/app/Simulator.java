@@ -52,6 +52,9 @@ public class Simulator {
     // 所有SCHDULING、START的车
     private PriorityQueue<CarStatus> schedulingQue = null;
     
+    // 所有可以上路的车辆
+    private PriorityQueue<CarStatus> startQue = null;
+    
     
     // 当前系统时间
     private int curSAT = 0;
@@ -63,6 +66,8 @@ public class Simulator {
     // 在道路上行驶的车辆数量，
     // 用于控制模拟器结束
     private int remCarCot = 0;
+    private int allCarCot = 0;
+    
     
     //规划器
     Planner planner = null;
@@ -74,6 +79,7 @@ public class Simulator {
     	crosses=ctx.crosses;
     	runningQue = new PriorityQueue<>();
     	schedulingQue = new PriorityQueue<>();
+    	startQue = new PriorityQueue<>();
     }
     
 	/**
@@ -110,13 +116,13 @@ public class Simulator {
     		schedulingQue.add(cs);
     	}); 
     	ctx.statues=statues;
-    	// 获得车辆总数
-    	remCarCot = cars.size();
+    	
+    	
+    	// 记录总时间
+    	allCarCot = cars.size();
     	// 设置系统时间为车辆最开始上路时间
-    	if(remCarCot>0)
+    	if(schedulingQue.size()>0)
     		curSAT = schedulingQue.peek().curSAT;
-    	
-    	
     	
     }
     
@@ -156,6 +162,7 @@ public class Simulator {
     			else if(cs.action==CarActions.STOP) {
     				// 该车到达终点
         			remCarCot--;
+        			allCarCot--;
         			System.err.println("Car:"+cs.carId+"->Cross:"+
         					cs.car.getDesCrossId()+"->time:"+curSAT);
     			}
@@ -179,15 +186,16 @@ public class Simulator {
     			else if(cs.action==CarActions.STOP) {
     				// 该车到达终点
         			remCarCot--;
+        			allCarCot--;
         			System.err.println("Car:"+cs.carId+"->Cross:"+
         					cs.car.getDesCrossId()+"->time:"+curSAT);
     			}
     				
     		}
     		
-    		System.err.println("Simulator modCot="+modCot);
-    		if(modCot==0) {System.err.println("Simulator may be dead locked!");}
-    		if(remCarCot>0) curSAT++;//继续执行模拟
+    		System.err.println("Simulator modCot="+modCot+" curCar="+remCarCot+" car="+allCarCot);
+    		if(modCot==0) {System.err.println("Simulator may be dead locked!"); break;}
+    		if(allCarCot>0) curSAT++;//继续执行模拟
     		else break;// 正常结束
     		
     	}// end while
@@ -431,6 +439,14 @@ public class Simulator {
     	// 处理准备上路的车
     	else if(cs.action==CarActions.START) {
     		
+    		// 规划器判断当前是否需要再使车辆上路
+    		if(!planner.feed(cs.carId, cs.tagCrossId, remCarCot)) {
+    			// 不允许车辆上路,推迟上路
+    			cs.curSAT++;
+    			return cs;
+    		}
+    		
+    		
     		//可以行驶到路口，检查能否到进入下一条路
     		cs.nextRoadId  = planner.next(cs.carId, cs.tagCrossId);
     		Road nextRoad = roads.get(cs.nextRoadId);
@@ -457,6 +473,8 @@ public class Simulator {
     		}
     		// 更新计数
     		modCot++;
+    		// 更新车辆数量
+    		remCarCot++;
 			cs.action=CarActions.RUNNING;
 			// 更新道路中车最大速度
 			cs.curRoadSpeed = nextRoadMaxSpeed;

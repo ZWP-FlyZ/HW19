@@ -134,6 +134,10 @@ public class CarStatus implements Comparable<CarStatus>{
 		}else {
 			// 处理SCHEDULING和START的节点
 			
+//			// 优先处理crossId小的路口
+//			if(tagCrossId!=o.tagCrossId) 
+//				return tagCrossId-o.tagCrossId;
+			
 			// 准备上路的车，以车id小的优先，
 			if((action==o.action)
 					&&action==CarActions.START) 
