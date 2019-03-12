@@ -99,12 +99,10 @@ public class Simulator {
     		// 启动行为
     		cs.action=CarActions.START;
     		cs.curSAT=car.getStartTime();
-    		cs.nextRoadId  = planner.next(car.getCarId(), car.getOriCrossId());
+    		
     		cs.frmCrossId = car.getOriCrossId();
     		// 获取道路出口的CrossId
     		cs.tagCrossId = car.getOriCrossId();
-//    		cs.tagCrossId = roads.get(cs.nextRoadId).
-//    					getAnotherCrossId(car.getOriCrossId());
     		// 假设准备上路为直走，并不影响路口调度
     		cs.turnDirected=DriveDirection.FOWARD;
     		statues.put(car.getCarId(),cs);
@@ -434,6 +432,7 @@ public class Simulator {
     	else if(cs.action==CarActions.START) {
     		
     		//可以行驶到路口，检查能否到进入下一条路
+    		cs.nextRoadId  = planner.next(cs.carId, cs.tagCrossId);
     		Road nextRoad = roads.get(cs.nextRoadId);
     		int nextRoadMaxSpeed = Math.min(nextRoad.getMaxSpeed(), 
     				cs.car.getMaxSpeed());
