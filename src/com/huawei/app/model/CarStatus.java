@@ -68,6 +68,12 @@ public class CarStatus implements Comparable<CarStatus>{
 		 * >当被正确路口调度后，状态会被改为RUNNING
 		 */
 		SCHEDULING,
+		/*
+		 * >处于路口调度行为中
+		 * >当被正确路口调度后，状态会被改为RUNNING
+		 */
+		BLOCK_SCHEDULING,		
+		
 		/* 
 		 * >车辆将要结束行程
 		 * >参与到路口调度当中

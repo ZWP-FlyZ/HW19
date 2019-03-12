@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.imageio.IIOException;
-
 import org.apache.log4j.Logger;
 
 import com.huawei.app.Application.Context;
@@ -22,7 +20,7 @@ import com.huawei.app.model.Road;
 
 public class PathPlanner implements Planner {
 
-	private static final Logger logger = Logger.getLogger(Simulator.class);
+
 	private Context ctx = null;
     private Map<Integer,Car> cars = null;
     private Map<Integer,Road> roads = null;

@@ -1,7 +1,5 @@
 package com.huawei.app.model;
 
-import java.util.List;
-
 /**
  * 
  * @author zwp12

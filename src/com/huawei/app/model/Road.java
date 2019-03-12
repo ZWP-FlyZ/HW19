@@ -77,7 +77,7 @@ public class Road {
 			return toChannels;
 		}
 		if(toCrossId!=crossId) 
-			throw new IllegalArgumentException("toCrossId !=crossId err");
+			throw new IllegalArgumentException("toCrossId !=crossId err "+crossId);
 		if(fromChannels==null) initFromRoadChannels();
 		
 		return fromChannels;
@@ -98,7 +98,7 @@ public class Road {
 		}
 		
 		if(fromCrossId!=crossId) 
-			throw new IllegalArgumentException("fromCrossId !=crossId err");
+			throw new IllegalArgumentException("fromCrossId !=crossId err "+crossId);
 		if(fromChannels==null) initFromRoadChannels();
 		return fromChannels;		
 		

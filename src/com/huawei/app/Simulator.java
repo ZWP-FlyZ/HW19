@@ -102,8 +102,9 @@ public class Simulator {
     		cs.nextRoadId  = planner.next(car.getCarId(), car.getOriCrossId());
     		cs.frmCrossId = car.getOriCrossId();
     		// 获取道路出口的CrossId
-    		cs.tagCrossId = roads.get(cs.nextRoadId).
-    					getAnotherCrossId(car.getOriCrossId());
+    		cs.tagCrossId = car.getOriCrossId();
+//    		cs.tagCrossId = roads.get(cs.nextRoadId).
+//    					getAnotherCrossId(car.getOriCrossId());
     		// 假设准备上路为直走，并不影响路口调度
     		cs.turnDirected=DriveDirection.FOWARD;
     		statues.put(car.getCarId(),cs);
@@ -142,12 +143,24 @@ public class Simulator {
     			runningQue.poll();
     			// 更新cs的状态
     			cs = updateRunningCarStatus(cs);
+    			if(cs.action==CarActions.BLOCK_SCHEDULING) {
+    				// 车辆以处于变道区，提前进行路口规划
+    				cs.action=CarActions.SCHEDULING;
+    				cs = schedulingCarStatus(cs);
+    				
+    			}
     			if(cs.action==CarActions.RUNNING)
     				// 如果还没有到达变道区，
     				runningQue.add(cs);
     			else if(cs.action==CarActions.SCHEDULING) 
     				// 如果到达变道区，加入到scheduling队列中
     				schedulingQue.add(cs);
+    			else if(cs.action==CarActions.STOP) {
+    				// 该车到达终点
+        			remCarCot--;
+        			System.err.println("Car:"+cs.carId+"->Cross:"+
+        					cs.car.getDesCrossId()+"->time:"+curSAT);
+    			}
     			
     		}
     		
@@ -175,7 +188,7 @@ public class Simulator {
     		}
     		
     		System.err.println("Simulator modCot="+modCot);
-    		if(modCot==0) {logger.info("Simulator may be dead locked!");}
+    		if(modCot==0) {System.err.println("Simulator may be dead locked!");}
     		if(remCarCot>0) curSAT++;//继续执行模拟
     		else break;// 正常结束
     		
@@ -202,9 +215,15 @@ public class Simulator {
     	int cLength = curChannel.getChannelLength();
     	int loc= cs.curChannelLocal;
     	if(loc>=cLength-cs.curRoadSpeed) {
-    		// 如果RUNNING行为的车已经在变道区时
-    		// 直接更改为SCHEDULING,不修改时间
-    		cs.action=CarActions.SCHEDULING;
+    		// 如果RUNNING行为的车已经在变道区时，需要提前进行路口规划
+    		// 直接更改为BLOCK_SCHEDULING,不修改时间
+    		cs.action=CarActions.BLOCK_SCHEDULING;
+			cs.nextRoadId = planner.next(cs.carId, cs.tagCrossId);
+			if(cs.nextRoadId<0) 
+				cs.turnDirected = DriveDirection.FOWARD;
+			else
+				cs.turnDirected = crosses.get(cs.tagCrossId)
+					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
     	}else {
     		// 可以进行位置更新
     		for(int i=1;i<=cs.curRoadSpeed;i++) {
@@ -328,7 +347,19 @@ public class Simulator {
     			return cs;// 不继续通过路口
     		}
     		
-    		//可以行驶到路口，检查能否到进入下一条路
+    		//可以行驶到路口，
+    		if(cs.tagCrossId==cs.car.getDesCrossId()) {
+    			// 如果已经可以完成行程
+    			// 设置占位
+    			cs.action=CarActions.STOP;
+    			cc[cs.curChannelLocal]=createNullCar(cs.curSAT);
+    			modCot++;
+    			return cs;
+    		}
+    		
+    		
+    		
+    		// 检查能否到进入下一条路
     		road = roads.get(cs.nextRoadId);
     		int nextRoadMaxSpeed = Math.min(road.getMaxSpeed(), 
     				cs.car.getMaxSpeed());
@@ -409,7 +440,8 @@ public class Simulator {
     		// 下一条道路最大可行长度
     		int nrage = nextRoadMaxSpeed;
     		
-    		RoadChannel[] rcs = nextRoad.getOutCrossChannels(cs.frmCrossId);
+    		// 下一条车的车道
+    		RoadChannel[] rcs = nextRoad.getOutCrossChannels(cs.tagCrossId);
     		CheckedResult ckres = checkNextRoad(rcs, nrage);
     		// 准备上路的车无法进入下一条道路
     		if(ckres==null) {
@@ -417,9 +449,9 @@ public class Simulator {
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
         		cs.nextRoadId  = planner.next(cs.carId, cs.frmCrossId);
-        		// 获取道路出口的CrossId
-        		cs.tagCrossId = roads.get(cs.nextRoadId).
-        					getAnotherCrossId(cs.frmCrossId);
+//        		// 获取道路出口的CrossId
+//        		cs.tagCrossId = roads.get(cs.nextRoadId).
+//        					getAnotherCrossId(cs.frmCrossId);
         		// 假设准备上路为直走，并不影响路口调度
         		cs.turnDirected=DriveDirection.FOWARD;
         		return cs;
