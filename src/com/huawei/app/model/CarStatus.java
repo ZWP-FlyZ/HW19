@@ -123,7 +123,7 @@ public class CarStatus implements Comparable<CarStatus>{
 		if(action==CarActions.RUNNING) {
 			// 处理处于RUNNING的节点	
 			// 位置在前的车优先更新位置
-			return o.curChannelId-curChannelLocal;
+			return o.curChannelLocal-curChannelLocal;
 			
 		}else {
 			// 处理SCHEDULING和START的节点
@@ -141,7 +141,7 @@ public class CarStatus implements Comparable<CarStatus>{
 			
 			// 优先调度位置在前的车
 			if(o.curChannelId!=curChannelLocal)
-				return o.curChannelId-curChannelLocal;
+				return o.curChannelLocal-curChannelLocal;
 			
 			// 优先调度车道小的车
 			if(curChannelId!=o.curChannelId)

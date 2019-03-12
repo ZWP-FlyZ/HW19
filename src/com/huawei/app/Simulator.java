@@ -127,7 +127,7 @@ public class Simulator {
      * @return
      */
     public int run() {
-    	logger.info("Simulator start run,AST="+curSAT+", car.size="+remCarCot);
+    	System.err.println("Simulator start run,AST="+curSAT+", car.size="+remCarCot);
     	CarStatus cs = null;
     	while(true) {
     		// 当前模拟器中还有车辆在行驶
@@ -168,13 +168,13 @@ public class Simulator {
     			else if(cs.action==CarActions.STOP) {
     				// 该车到达终点
         			remCarCot--;
-        			logger.info("Car:"+cs.carId+"->Cross:"+
+        			System.err.println("Car:"+cs.carId+"->Cross:"+
         					cs.car.getDesCrossId()+"->time:"+curSAT);
     			}
     				
     		}
     		
-    		logger.info("Simulator modCot="+modCot);
+    		System.err.println("Simulator modCot="+modCot);
     		if(modCot==0) {logger.info("Simulator may be dead locked!");}
     		if(remCarCot>0) curSAT++;//继续执行模拟
     		else break;// 正常结束

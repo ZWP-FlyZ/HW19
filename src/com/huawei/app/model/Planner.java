@@ -19,12 +19,6 @@ public interface Planner {
 	 */
 	public int next(int carId,int curCrossId);
 	
-	/**
-	 *  
-	 *  >返回carId车接下来路径上预计进入的RoadId
-	 * @param carId
-	 * @return
-	 */
-	public List<Integer> nextAll(int carId,int curCrossId);
+
 	
 }

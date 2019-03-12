@@ -1,10 +1,16 @@
 package com.huawei.app;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.imageio.IIOException;
 
 import org.apache.log4j.Logger;
 
@@ -25,7 +31,21 @@ public class PathPlanner implements Planner {
     private List<Integer>  crossIdx =null;
     private Road[][] graph = null;
     
-	public PathPlanner(Context ctx){
+	private Map<Integer,CarPathNode> initCarPath=null;
+    
+    private class CarPathNode{
+    	int curCrossId;
+    	int nextRoadId;
+    	CarPathNode next;
+    	CarPathNode(int crossId,int roadid,CarPathNode next){
+    		this.curCrossId=crossId;
+    		this.nextRoadId=roadid;
+    		this.next =next;
+    	}
+    }
+    
+    
+    public PathPlanner(Context ctx){
     	this.ctx= ctx; 
     	cars = ctx.cars;
     	roads=ctx.roads;
@@ -47,6 +67,16 @@ public class PathPlanner implements Planner {
 			if(road.isDuplex()) 
 				graph[j][i]=road;
 		});
+		
+		
+		
+		initCarPath = new HashMap<>();
+		cars.values().forEach(car->{
+			CarPathNode initpath=dij(car,car.getOriCrossId(),car.getDesCrossId());
+			initCarPath.put(car.getCarId(), initpath);
+		});
+		
+		
 		System.err.println("");
 	}
 	
@@ -55,7 +85,7 @@ public class PathPlanner implements Planner {
 		Map<Integer,Integer> res = new HashMap<>();
 		List<Integer> ids = crossIds.stream()
 			.sorted((a,b)->Integer.compare(a, b))
-			.collect(Collectors.toList());
+			.collect(Collectors.toCollection(ArrayList::new));
 		for(int i=0;i<ids.size();i++) {
 			res.put(ids.get(i), i);
 		}
@@ -72,6 +102,10 @@ public class PathPlanner implements Planner {
 		return crossReIdx.get(crossId);
 	}
 	
+	private int cReId(int cidx) {
+		return crossIdx.get(cidx);
+	}
+	
 	/**
 	 * 返回利用当前耗费
 	 * @param road
@@ -84,17 +118,86 @@ public class PathPlanner implements Planner {
 	}
 	
 	
+	private CarPathNode dij(Car car,int oriCrossId,int desCrossId) {
+		
+		if(car==null||oriCrossId==desCrossId) 
+			throw new IllegalArgumentException("car==null or oriCrossId==desCrossId");
+		
+		int[][] G =  new int[crosses.size()][crosses.size()];
+		int[] path = new int[crosses.size()];
+
+		
+		int ori = cIdx(oriCrossId);
+		int des = cIdx(desCrossId);
+		
+		Set<Integer> set = new HashSet<>(crosses.size());		
+		for(int i=0;i<crosses.size();i++)
+			if(i!=ori) set.add(i);
+		Arrays.fill(path, -1);
+		
+		
+		// 获得当前路况下的权图
+		for(int i=0;i<G.length;i++)
+			for(int j=0;j<G.length;j++) {
+				if(graph[i][j]==null) G[i][j] = Integer.MAX_VALUE;
+				else {
+					Road road = graph[i][j];
+					G[i][j]=cost(road,car);
+					// 设置父节点
+					if(i==ori)path[j]=ori;
+				}
+			}
+		
+		out:
+		for(int i=1;i<crosses.size();i++) {
+			int tmp=Integer.MAX_VALUE;
+			int k = -1;
+			for(int v:set) {
+				if(G[ori][v]<tmp) {
+					tmp= G[ori][v];
+					k=v;
+				}
+			}
+			///// 如果这里k<-1 表示遇到死路口 //////// 
+			if(k<0) throw new IllegalArgumentException("k<0!");
+			if(k==des) break out;// 已经寻找到结尾
+			set.remove(k);
+			for(int v:set) {
+				if(G[k][v]<Integer.MAX_VALUE&&
+						G[ori][k]+G[k][v]<G[ori][v]) {
+					G[ori][v]=G[ori][k]+G[k][v];
+					path[v]=k;//更新父节点
+				}
+			}
+		}// end 
+		
+		// 路径恢复
+		// 创建一个尾节点
+		CarPathNode next = new CarPathNode(cReId(des),-1,null);
+		int par =-1,son=des;
+		while((par=path[son])!=ori) {
+			next = new CarPathNode(cReId(par),
+					graph[par][son].getRoadId(),next);
+			son=par;
+		}
+		next = new CarPathNode(cReId(par),
+				graph[par][son].getRoadId(),next);
+		return next;	
+	}
+	
+	
+	
 	
 	@Override
 	public int next(int carId, int curCrossId) {
 		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public List<Integer> nextAll(int carId, int curCrossId) {
-		// TODO Auto-generated method stub
-		return null;
+		CarPathNode cur = initCarPath.get(carId);
+		CarPathNode p = cur;
+		while(p!=null&&p.curCrossId!=curCrossId)
+			p=p.next;
+		if(p==null) 
+			throw new IllegalArgumentException("CrossId:"+curCrossId+" is not in carpath");
+		return p.nextRoadId;
 	}
 
 	

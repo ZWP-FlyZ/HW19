@@ -58,7 +58,7 @@ public class Application {
         sim.registerPlanner(planner);
         // 初始化
         planner.init();
-//        sim.init();
+        sim.init();
         // 运行模拟器产生运行结果
         sim.run();
         long runingtime = Duration.between(now, Instant.now()).toMillis();
