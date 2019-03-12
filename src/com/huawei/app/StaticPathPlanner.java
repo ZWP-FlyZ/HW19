@@ -19,7 +19,7 @@ import com.huawei.app.model.Road;
 public class StaticPathPlanner implements Planner {
 
 
-	private Context ctx = null;
+
     private Map<Integer,Car> cars = null;
     private Map<Integer,Road> roads = null;
     private Map<Integer,Cross> crosses = null;
@@ -42,7 +42,7 @@ public class StaticPathPlanner implements Planner {
     
     
     public StaticPathPlanner(Context ctx){
-    	this.ctx= ctx; 
+
     	cars = ctx.cars;
     	roads=ctx.roads;
     	crosses=ctx.crosses;
@@ -207,7 +207,7 @@ public class StaticPathPlanner implements Planner {
 
 
 	@Override
-	public boolean feed(int carId, int crossId, int remCars) {
+	public boolean feed(int carId, int crossId,int remCars) {
 		// TODO Auto-generated method stub
 		return true;
 	}

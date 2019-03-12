@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
 
-import org.apache.log4j.Logger;
+
 
 import com.huawei.app.Application.Context;
 import com.huawei.app.model.Car;
@@ -38,7 +38,7 @@ import com.huawei.app.model.RoadChannel;
  */
 public class Simulator {
 
-	private static final Logger logger = Logger.getLogger(Simulator.class);
+
 	private Context ctx = null;
     private Map<Integer,Car> cars = null;
     private Map<Integer,Road> roads = null;
@@ -268,12 +268,14 @@ public class Simulator {
     			cs.action=CarActions.SCHEDULING;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
-    			cs.nextRoadId = planner.next(cs.carId, cs.tagCrossId);
-    			if(cs.nextRoadId<0) 
-    				cs.turnDirected = DriveDirection.FOWARD;
-    			else
-    				cs.turnDirected = crosses.get(cs.tagCrossId)
-    					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
+    			if(cs.tagCrossId!=cs.car.getDesCrossId()) {
+        			cs.nextRoadId = planner.next(cs.carId, cs.tagCrossId);
+        			if(cs.nextRoadId<0) 
+        				cs.turnDirected = DriveDirection.FOWARD;
+        			else
+        				cs.turnDirected = crosses.get(cs.tagCrossId)
+        					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
+    			}
     		}
     			
     	}
@@ -355,12 +357,14 @@ public class Simulator {
     			cs.curSAT++;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
-    			cs.nextRoadId = planner.next(cs.carId, cs.tagCrossId);
-    			if(cs.nextRoadId<0) 
-    				cs.turnDirected = DriveDirection.FOWARD;
-    			else
-    				cs.turnDirected = crosses.get(cs.tagCrossId)
-    					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
+    			if(cs.tagCrossId!=cs.car.getDesCrossId()) {
+        			cs.nextRoadId = planner.next(cs.carId, cs.tagCrossId);
+        			if(cs.nextRoadId<0) 
+        				cs.turnDirected = DriveDirection.FOWARD;
+        			else
+        				cs.turnDirected = crosses.get(cs.tagCrossId)
+        					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
+    			}
     			return cs;// 不继续通过路口
     		}
     		
@@ -420,12 +424,12 @@ public class Simulator {
     		// 表明T时刻该位置有车、其他T时刻的车无法行驶到这
 			cc[cs.curChannelLocal]=createNullCar(cs.curSAT);
 			
-			if(cs.tagCrossId==cs.car.getDesCrossId()) {
-			// 若车辆已经到达终点
-				cs.action=CarActions.STOP;
-				// cs.curSAT中保存这结束行程的时刻
-				return cs;
-			}
+//			if(cs.tagCrossId==cs.car.getDesCrossId()) {
+//			// 若车辆已经到达终点
+//				cs.action=CarActions.STOP;
+//				// cs.curSAT中保存这结束行程的时刻
+//				return cs;
+//			}
 			
 			cs.action=CarActions.RUNNING;
 			// 更新道路中车最大速度

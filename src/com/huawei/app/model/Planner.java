@@ -23,7 +23,7 @@ public interface Planner {
 	 * remCars 表示当期模拟器中车辆的数量
 	 * @return
 	 */
-	public boolean feed(int carId,int crossId,int remCars);
+	public boolean feed(int carId,int crossId,int curSAT);
 	
 	
 }
