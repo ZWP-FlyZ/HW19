@@ -206,11 +206,10 @@ public class StaticPathPlanner implements Planner {
 	}
 
 
-
 	@Override
 	public boolean feed(int carId, int crossId, int remCars) {
 		// TODO Auto-generated method stub
-		return remCars<2;
+		return true;
 	}
 	
 

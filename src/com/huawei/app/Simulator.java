@@ -24,8 +24,8 @@ import com.huawei.app.model.RoadChannel;
  *
  * > 
  * > 
- * > 模拟过程是一个实时系统，每一时刻都执行车辆实时位置更新子任务和路口调度任务子任务
- * > 首先全道路实时更新处于RUNNING行为的车的位置，然后处理处于SCHEDULING和START行为的车
+ * > 模拟过程是一个实时系统，每一时刻都执行车辆实时位置更新子任务、路口调度子任务、车辆上路子任务
+ * > 首先全道路实时更新处于RUNNING行为的车的位置，然后处理处于SCHEDULING的车、最后处理START行为的车
  * > 每辆车在当前车道上可行最大车速V1、后一车道最大速度为V2,在路口前v1长度和路口后v2长度为，该车在路口的变道区
  * > 
  * > 1.首先处理位置更新队列中的所有车辆的位置，当更新的后的位置处于变道区时，则让规划器计算下一步的路径,
@@ -33,6 +33,7 @@ import com.huawei.app.model.RoadChannel;
  * > 2.首先车辆检查能否前行至路口，有车辆阻挡或者有残影占位时，将车辆前移。
  * > 如果能够前行到路口，则检查下一道路能否容纳新车辆，如果不能将车辆前移
  * > 如果能顺利通过路口，则检查当前路口是否为车辆的结束地点，若不是则将CarStatus更改相关信息，设置为RUNNING行为。
+ * > 注意任何车辆不能跨越T时刻的NullCar占位和真实存在的车
  *
  */
 public class Simulator {
@@ -49,10 +50,11 @@ public class Simulator {
     private PriorityQueue<CarStatus> runningQue = null;
     
     // 所有需要被路口调度的车,
-    // 所有SCHDULING、START的车
+    // 所有SCHDULING的车
     private PriorityQueue<CarStatus> schedulingQue = null;
     
     // 所有可以上路的车辆
+    // 所有START的车
     private PriorityQueue<CarStatus> startQue = null;
     
     
@@ -64,10 +66,10 @@ public class Simulator {
     private int modCot = 0;
     
     // 在道路上行驶的车辆数量，
-    // 用于控制模拟器结束
     private int remCarCot = 0;
+    // 还有多少车还没有结束行程
+    // 用于控制模拟器结束
     private int allCarCot = 0;
-    
     
     //规划器
     Planner planner = null;
@@ -113,16 +115,15 @@ public class Simulator {
     		cs.turnDirected=DriveDirection.FOWARD;
     		statues.put(car.getCarId(),cs);
     		// 添加准备上路的车辆
-    		schedulingQue.add(cs);
+    		startQue.add(cs);
     	}); 
     	ctx.statues=statues;
+    
     	
-    	
-    	// 记录总时间
     	allCarCot = cars.size();
     	// 设置系统时间为车辆最开始上路时间
-    	if(schedulingQue.size()>0)
-    		curSAT = schedulingQue.peek().curSAT;
+    	if(startQue.size()>0)
+    		curSAT = startQue.peek().curSAT;
     	
     }
     
@@ -136,7 +137,6 @@ public class Simulator {
     	CarStatus cs = null;
     	while(true) {
     		// 当前模拟器中还有车辆在行驶
-    		
     		// 重置操作计数
     		modCot=0;
     		
@@ -151,8 +151,8 @@ public class Simulator {
     				// 车辆以处于变道区，提前进行路口规划
     				cs.action=CarActions.SCHEDULING;
     				cs = schedulingCarStatus(cs);
-    				
     			}
+    			
     			if(cs.action==CarActions.RUNNING)
     				// 如果还没有到达变道区，
     				runningQue.add(cs);
@@ -168,7 +168,6 @@ public class Simulator {
     			}
     			
     		}
-    		
     		
     		// 处理路口调度的车
     		while(!schedulingQue.isEmpty()&&
@@ -193,15 +192,27 @@ public class Simulator {
     				
     		}
     		
-    		System.err.println("Simulator modCot="+modCot+" curCar="+remCarCot+" car="+allCarCot);
+    		// 处理准备上路的车
+    		while(!startQue.isEmpty()&&
+        			(cs=startQue.peek()).curSAT==curSAT) {
+        			// 从scheduling中取出要路口调度的车
+    				startQue.poll();
+        			// 将车进行路口调度
+        			cs = startCarStatus(cs);
+        			if(cs.action==CarActions.RUNNING)
+        				// 路口调度成功，继续道路行驶
+        				runningQue.add(cs);
+        			else if(cs.action==CarActions.START)
+        				// 上一时刻车辆通过路口失败，需要继续等待路口调度
+        				startQue.add(cs);
+        		}
+    		System.out.println("Simulator modCot="+modCot+" curCar="+remCarCot+" car="+allCarCot);
     		if(modCot==0) {System.err.println("Simulator may be dead locked!"); break;}
     		if(allCarCot>0) curSAT++;//继续执行模拟
     		else break;// 正常结束
     		
     	}// end while
-    	logger.info("Simulator finished,AST="+curSAT);
-    	
-    	
+    	System.out.println("Simulator finished,AST="+curSAT);
     	
     	return curSAT;
     }
@@ -363,8 +374,6 @@ public class Simulator {
     			return cs;
     		}
     		
-    		
-    		
     		// 检查能否到进入下一条路
     		road = roads.get(cs.nextRoadId);
     		int nextRoadMaxSpeed = Math.min(road.getMaxSpeed(), 
@@ -436,16 +445,22 @@ public class Simulator {
    		
     	}// end action=SCEHDULING
     	
+    	// 出现无效Action出现在当前处理中
+    	else 
+    		throw new IllegalArgumentException("illegel Action "+cs.action);
+    }
+    
+    
+    private CarStatus startCarStatus(CarStatus cs) {
     	// 处理准备上路的车
-    	else if(cs.action==CarActions.START) {
-    		
+    	CarStatus[] cc =null;
+    	if(cs.action==CarActions.START) {
     		// 规划器判断当前是否需要再使车辆上路
     		if(!planner.feed(cs.carId, cs.tagCrossId, remCarCot)) {
     			// 不允许车辆上路,推迟上路
     			cs.curSAT++;
     			return cs;
     		}
-    		
     		
     		//可以行驶到路口，检查能否到进入下一条路
     		cs.nextRoadId  = planner.next(cs.carId, cs.tagCrossId);
@@ -464,9 +479,6 @@ public class Simulator {
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
         		cs.nextRoadId  = planner.next(cs.carId, cs.frmCrossId);
-//        		// 获取道路出口的CrossId
-//        		cs.tagCrossId = roads.get(cs.nextRoadId).
-//        					getAnotherCrossId(cs.frmCrossId);
         		// 假设准备上路为直走，并不影响路口调度
         		cs.turnDirected=DriveDirection.FOWARD;
         		return cs;
