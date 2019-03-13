@@ -51,8 +51,8 @@ public class Application {
         // 完成cars、roads、crosses的一些基础工作
         preprocess(ctx);
         // 创建规划器
-//        StaticPathPlanner planner = new StaticPathPlanner(ctx);
-        DynamicPathPlanner planner = new DynamicPathPlanner(ctx);
+        StaticPathPlanner planner = new StaticPathPlanner(ctx);
+//        DynamicPathPlanner planner = new DynamicPathPlanner(ctx);
         // 创建模拟器
         Simulator sim = new Simulator(ctx);
         // 注册规划器

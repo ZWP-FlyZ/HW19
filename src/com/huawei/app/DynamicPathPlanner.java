@@ -16,6 +16,7 @@ import com.huawei.app.model.CarStatus;
 import com.huawei.app.model.Cross;
 import com.huawei.app.model.Planner;
 import com.huawei.app.model.Road;
+import com.huawei.app.model.RoadChannel;
 
 
 public class DynamicPathPlanner implements Planner{
@@ -34,7 +35,7 @@ public class DynamicPathPlanner implements Planner{
     private int[][] G = null;
     
     // 更新
-    private int UPDATE_DELAY=10;
+    private int UPDATE_DELAY=0;
     
     // 当前系统时间
     private int curSAT = -1;
@@ -124,7 +125,27 @@ public class DynamicPathPlanner implements Planner{
 	 * @return
 	 */
 	private int cost(Road road) {
-		return (int)Math.ceil(road.getRoadLength()*1.0/road.getMaxSpeed());
+		
+		int baseTime = (int)Math.ceil(road.getRoadLength()*1.0/road.getMaxSpeed());
+		int cout = 0;
+		CarStatus[] cc = null;
+		RoadChannel[] rcs = road.getOutCrossChannels(road.getFromCrossId());
+		for(RoadChannel rc :rcs) {
+			cc = rc.getChanel();
+			for(CarStatus cs:cc)
+				if(cs!=null&&cs.carId>=0)cout++;
+		}
+		if(road.isDuplex()) {
+			rcs = road.getInCrossChannels(road.getToCrossId());
+			for(RoadChannel rc :rcs) {
+				cc = rc.getChanel();
+				for(CarStatus cs:cc)
+					if(cs!=null&&cs.carId>=0)cout++;
+			}
+			cout = cout/2;
+		}
+
+		return baseTime+cout;
 	}
 	
 	
