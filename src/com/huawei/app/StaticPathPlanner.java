@@ -18,8 +18,6 @@ import com.huawei.app.model.Road;
 
 public class StaticPathPlanner implements Planner {
 
-
-
     private Map<Integer,Car> cars = null;
     private Map<Integer,Road> roads = null;
     private Map<Integer,Cross> crosses = null;
@@ -184,7 +182,7 @@ public class StaticPathPlanner implements Planner {
 	
 	
 	@Override
-	public int next(int carId, int curCrossId) {
+	public int onScehduling(int carId, int curCrossId) {
 		// TODO Auto-generated method stub
 		CarPathNode cur = initCarPath.get(carId);
 		CarPathNode p = cur;
@@ -205,11 +203,16 @@ public class StaticPathPlanner implements Planner {
 		return sb.toString();
 	}
 
+	@Override
+	public boolean onStart(int carId, int crossId,int remCars) {
+		// TODO Auto-generated method stub
+		return remCars<300;//当前系统限制限制300辆车
+	}
 
 	@Override
-	public boolean feed(int carId, int crossId,int remCars) {
-		// TODO Auto-generated method stub
-		return true;
+	public boolean onStop(int carId, int crossId, int curSAT) {
+		System.err.println("Car:"+carId+"->Cross:"+crossId+"->time:"+curSAT);
+		return false;
 	}
 	
 

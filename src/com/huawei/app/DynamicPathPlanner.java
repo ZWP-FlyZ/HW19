@@ -18,7 +18,22 @@ import com.huawei.app.model.Planner;
 import com.huawei.app.model.Road;
 import com.huawei.app.model.RoadChannel;
 
-
+/**
+ * 
+ * @author zwp12
+ *
+ * 动态静态可实现的规划器模板
+ *
+ *	方法1（静态）：假设当前系统内无任何车辆时，为每辆车进行规划一条路线，
+ *		所有车辆之后按照自己路线行驶
+ *	方法2（轻微动态，整体静态）：所有车辆在上路前，根据当前系统车况初始化一条路线，之后车辆按照该路线行驶
+ *	方法3（局部静态，整体动态）：所有车辆会保留若干时间前计算的一条路线，到达时间有限期后失效重新计算路线
+ *	方法4（实时）：所有车辆在路口调度之前必须重新计算当前最优路线
+ *	
+ *	以上方法可以配合 onStart() 来限制在系统中车辆的数量
+ *	
+ *
+ */
 public class DynamicPathPlanner implements Planner{
 
 	private Context ctx = null;
@@ -93,13 +108,13 @@ public class DynamicPathPlanner implements Planner{
 		crossReIdx = res;
 	}
 	
-	private void updateG() {
+	private void updateG(int speed) {
 		for(int i=0;i<G.length;i++)
 			for(int j=0;j<G.length;j++) {
 				if(graph[i][j]==null) G[i][j] = Integer.MAX_VALUE;
 				else {
 					Road road = graph[i][j];
-					G[i][j]=cost(road);
+					G[i][j]=cost(road,speed);
 				}
 			}
 	}
@@ -124,9 +139,10 @@ public class DynamicPathPlanner implements Planner{
 	 * @param car
 	 * @return
 	 */
-	private int cost(Road road) {
+	private int cost(Road road,int speed) {
 		
-		int baseTime = (int)Math.ceil(road.getRoadLength()*1.0/road.getMaxSpeed());
+		int spd = Math.min(road.getMaxSpeed(),speed);
+		int baseTime = (int)Math.ceil(road.getRoadLength()*1.0/spd);
 		int cout = 0;
 		CarStatus[] cc = null;
 		RoadChannel[] rcs = road.getOutCrossChannels(road.getFromCrossId());
@@ -145,7 +161,7 @@ public class DynamicPathPlanner implements Planner{
 			cout = cout/2;
 		}
 
-		return cout;
+		return baseTime+cout;
 	}
 	
 	
@@ -166,7 +182,6 @@ public class DynamicPathPlanner implements Planner{
 		for(int i=0;i<crosses.size();i++)
 			if(i!=ori) set.add(i);
 		Arrays.fill(path, -1);
-		Arrays.fill(dist, Integer.MAX_VALUE);
 		for(int i=0;i<G.length;i++) {
 			dist[i]=G[ori][i];
 			if(graph[ori][i]!=null)path[i]=ori;
@@ -178,7 +193,7 @@ public class DynamicPathPlanner implements Planner{
 			int k = -1;
 			for(int v:set) {
 				if(dist[v]<tmp) {
-					tmp= G[ori][v];
+					tmp= dist[v];
 					k=v;
 				}
 			}
@@ -212,8 +227,7 @@ public class DynamicPathPlanner implements Planner{
 	
 	
 	@Override
-	public int next(int carId, int curCrossId) {
-		
+	public int onScehduling(int carId, int curCrossId) {
 		
 		CarStatus cs = ctx.statues.get(carId);
 		Car car = cs.car;
@@ -221,15 +235,10 @@ public class DynamicPathPlanner implements Planner{
 		if(curCrossId==car.getDesCrossId())
 			return -1;
 		
-		int _curSAT = cs.curSAT;
-		if(curSAT<0||_curSAT>curSAT+UPDATE_DELAY) {
-			curSAT=_curSAT;
-			updateG();
-			initCarPath.put(carId, null);
-		}
 		CarPathNode cur;
 		if((cur=initCarPath.get(carId))==null) {
-			cur = dij(car,curCrossId,car.getDesCrossId());
+			updateG(car.getMaxSpeed());
+			cur = dij(car,car.getOriCrossId(),car.getDesCrossId());
 			initCarPath.put(carId, cur);
 		}
 		while(cur!=null&&cur.curCrossId!=curCrossId)
@@ -241,9 +250,16 @@ public class DynamicPathPlanner implements Planner{
 	}
 	
 	@Override
-	public boolean feed(int carId, int crossId, int remCars) {
+	public boolean onStart(int carId, int crossId, int remCars) {
 		// TODO Auto-generated method stub
-		return true;
+		return remCars<300;
+	}
+	
+	@Override
+	public boolean onStop(int carId, int crossId, int curSAT) {
+		// TODO Auto-generated method stub
+		System.err.println("Car:"+carId+"->Cross:"+crossId+"->time:"+curSAT);
+		return false;
 	}
 	
 	public String showPath(int carId) {
@@ -255,5 +271,6 @@ public class DynamicPathPlanner implements Planner{
 		}
 		return sb.toString();
 	}
+	
 
 }

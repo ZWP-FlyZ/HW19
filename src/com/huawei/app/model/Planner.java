@@ -16,7 +16,7 @@ public interface Planner {
 	 * 如果下一条道路的id和当前车的id相同，将报出异常
 	 * 
 	 */
-	public int next(int carId,int curCrossId);
+	public int onScehduling(int carId,int curCrossId);
 	
 
 	/**
@@ -24,7 +24,14 @@ public interface Planner {
 	 * remCars 表示当期模拟器中车辆的数量
 	 * @return
 	 */
-	public boolean feed(int carId,int crossId,int curSAT);
+	public boolean onStart(int carId,int crossId,int curRemCar);
+	
+	/**
+	 * 表示car在curSAT到达路口crossId,结束行程
+	 * remCars 表示当期模拟器中车辆的数量
+	 * @return
+	 */
+	public boolean onStop(int carId,int crossId,int curSAT);
 	
 	
 }
