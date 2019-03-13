@@ -16,7 +16,7 @@ public interface Planner {
 	 * 如果下一条道路的id和当前车的id相同，将报出异常
 	 * 
 	 */
-	public int onScehduling(int carId,int curCrossId);
+	public int onScheduling(int carId,int curCrossId);
 	
 
 	/**

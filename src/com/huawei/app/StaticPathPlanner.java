@@ -182,7 +182,7 @@ public class StaticPathPlanner implements Planner {
 	
 	
 	@Override
-	public int onScehduling(int carId, int curCrossId) {
+	public int onScheduling(int carId, int curCrossId) {
 		// TODO Auto-generated method stub
 		CarPathNode cur = initCarPath.get(carId);
 		CarPathNode p = cur;

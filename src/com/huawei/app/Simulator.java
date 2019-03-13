@@ -233,7 +233,7 @@ public class Simulator {
     		// 如果RUNNING行为的车已经在变道区时，需要提前进行路口规划
     		// 直接更改为BLOCK_SCHEDULING,不修改时间
     		cs.action=CarActions.BLOCK_SCHEDULING;
-			cs.nextRoadId = planner.onScehduling(cs.carId, cs.tagCrossId);
+			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
 			if(cs.nextRoadId<0) 
 				cs.turnDirected = DriveDirection.FOWARD;
 			else
@@ -262,7 +262,7 @@ public class Simulator {
     			cs.action=CarActions.SCHEDULING;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为直行
-    			cs.nextRoadId = planner.onScehduling(cs.carId, cs.tagCrossId);
+    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
     			else
@@ -344,7 +344,7 @@ public class Simulator {
     			cs.curSAT++;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
-    			cs.nextRoadId = planner.onScehduling(cs.carId, cs.tagCrossId);
+    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
     			else
@@ -394,7 +394,7 @@ public class Simulator {
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
     			
     			/// 也许这里不用请求规划器告知路径，以原来的路径行驶
-    			cs.nextRoadId = planner.onScehduling(cs.carId, cs.tagCrossId);
+    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
     			else
@@ -447,7 +447,7 @@ public class Simulator {
     		}
     		
     		//可以行驶到路口，检查能否到进入下一条路
-    		cs.nextRoadId  = planner.onScehduling(cs.carId, cs.tagCrossId);
+    		cs.nextRoadId  = planner.onScheduling(cs.carId, cs.tagCrossId);
     		Road nextRoad = roads.get(cs.nextRoadId);
     		int nextRoadMaxSpeed = Math.min(nextRoad.getMaxSpeed(), 
     				cs.car.getMaxSpeed());

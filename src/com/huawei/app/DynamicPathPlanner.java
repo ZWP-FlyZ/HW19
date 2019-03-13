@@ -227,7 +227,7 @@ public class DynamicPathPlanner implements Planner{
 	
 	
 	@Override
-	public int onScehduling(int carId, int curCrossId) {
+	public int onScheduling(int carId, int curCrossId) {
 		
 		CarStatus cs = ctx.statues.get(carId);
 		Car car = cs.car;
