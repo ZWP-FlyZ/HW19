@@ -118,8 +118,7 @@ public class Simulator {
     		startQue.add(cs);
     	}); 
     	ctx.statues=statues;
-    
-    	
+   
     	allCarCot = cars.size();
     	// 设置系统时间为车辆最开始上路时间
     	if(startQue.size()>0)
@@ -268,14 +267,12 @@ public class Simulator {
     			cs.action=CarActions.SCHEDULING;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
-    			if(cs.tagCrossId!=cs.car.getDesCrossId()) {
-        			cs.nextRoadId = planner.next(cs.carId, cs.tagCrossId);
-        			if(cs.nextRoadId<0) 
-        				cs.turnDirected = DriveDirection.FOWARD;
-        			else
-        				cs.turnDirected = crosses.get(cs.tagCrossId)
-        					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
-    			}
+    			cs.nextRoadId = planner.next(cs.carId, cs.tagCrossId);
+    			if(cs.nextRoadId<0) 
+    				cs.turnDirected = DriveDirection.FOWARD;
+    			else
+    				cs.turnDirected = crosses.get(cs.tagCrossId)
+    					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
     		}
     			
     	}
@@ -357,14 +354,12 @@ public class Simulator {
     			cs.curSAT++;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
-    			if(cs.tagCrossId!=cs.car.getDesCrossId()) {
-        			cs.nextRoadId = planner.next(cs.carId, cs.tagCrossId);
-        			if(cs.nextRoadId<0) 
-        				cs.turnDirected = DriveDirection.FOWARD;
-        			else
-        				cs.turnDirected = crosses.get(cs.tagCrossId)
-        					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
-    			}
+    			cs.nextRoadId = planner.next(cs.carId, cs.tagCrossId);
+    			if(cs.nextRoadId<0) 
+    				cs.turnDirected = DriveDirection.FOWARD;
+    			else
+    				cs.turnDirected = crosses.get(cs.tagCrossId)
+    					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
     			return cs;// 不继续通过路口
     		}
     		

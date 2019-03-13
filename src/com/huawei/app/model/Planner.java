@@ -12,7 +12,8 @@ public interface Planner {
 	
 	/**
 	 * >返回carId车接下来要进入的RoadId
-	 * @return 如果返回-1表示无效
+	 * @return 正常返回一个道路ID,curCrossId已经和目的地相同，则需要返回-1
+	 * 如果下一条道路的id和当前车的id相同，将报出异常
 	 * 
 	 */
 	public int next(int carId,int curCrossId);

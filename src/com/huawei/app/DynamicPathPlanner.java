@@ -35,7 +35,7 @@ public class DynamicPathPlanner implements Planner{
     private int[][] G = null;
     
     // 更新
-    private int UPDATE_DELAY=0;
+    private int UPDATE_DELAY=1;
     
     // 当前系统时间
     private int curSAT = -1;
@@ -213,9 +213,14 @@ public class DynamicPathPlanner implements Planner{
 	
 	@Override
 	public int next(int carId, int curCrossId) {
-
+		
+		
 		CarStatus cs = ctx.statues.get(carId);
 		Car car = cs.car;
+		// 注意已经到达目的地，返回-1
+		if(curCrossId==car.getDesCrossId())
+			return -1;
+		
 		int _curSAT = cs.curSAT;
 		if(curSAT<0||_curSAT>curSAT+UPDATE_DELAY) {
 			curSAT=_curSAT;

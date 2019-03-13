@@ -88,6 +88,8 @@ public class Cross {
 
 	
 	public int getTurnDireByRoad(int inRoadId,int outRoadId) {
+		if(inRoadId<0||outRoadId<0||inRoadId==outRoadId) 
+			throw new IllegalArgumentException("Error RoadId:inRoad="+inRoadId+",outRoad="+outRoadId);
 		return getTurnDirection(getDirectionByRoadId(inRoadId),outRoadId);
 	}
 	
