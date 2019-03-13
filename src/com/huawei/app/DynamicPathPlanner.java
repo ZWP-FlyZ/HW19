@@ -35,7 +35,7 @@ public class DynamicPathPlanner implements Planner{
     private int[][] G = null;
     
     // 更新
-    private int UPDATE_DELAY=1;
+    private int UPDATE_DELAY=10;
     
     // 当前系统时间
     private int curSAT = -1;
@@ -145,7 +145,7 @@ public class DynamicPathPlanner implements Planner{
 			cout = cout/2;
 		}
 
-		return baseTime+cout;
+		return cout;
 	}
 	
 	

@@ -55,6 +55,7 @@ public class Application {
         DynamicPathPlanner planner = new DynamicPathPlanner(ctx);
         // 创建模拟器
         Simulator sim = new Simulator(ctx);
+//        BlockSimulator sim = new BlockSimulator(ctx);
         // 注册规划器
         sim.registerPlanner(planner);
         // 初始化

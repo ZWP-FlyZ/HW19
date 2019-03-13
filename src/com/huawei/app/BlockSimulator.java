@@ -22,7 +22,7 @@ import com.huawei.app.model.RoadChannel;
  * 
  * @author zwp12
  *
- * > T时刻无占位的模拟器
+ * > 实现T时刻车辆占位的模拟器
  * > 
  * > 模拟过程是一个实时系统，每一时刻都执行车辆实时位置更新子任务、路口调度子任务、车辆上路子任务
  * > 首先全道路实时更新处于RUNNING行为的车的位置，然后处理处于SCHEDULING的车、最后处理START行为的车
@@ -30,13 +30,13 @@ import com.huawei.app.model.RoadChannel;
  * > 
  * > 1.首先处理位置更新队列中的所有车辆的位置，当更新的后的位置处于变道区时，则让规划器计算下一步的路径,
  * > 更新CarStatus相关信息，设置SCHEDULING行为,并加入到路口调度队列当中
- * > 2.首先车辆检查能否前行至路口，有车辆阻挡时，只将车辆前移。
+ * > 2.首先车辆检查能否前行至路口，有车辆阻挡或者有残影占位时，将车辆前移。
  * > 如果能够前行到路口，则检查下一道路能否容纳新车辆，如果不能将车辆前移
  * > 如果能顺利通过路口，则检查当前路口是否为车辆的结束地点，若不是则将CarStatus更改相关信息，设置为RUNNING行为。
- * > 
+ * > 注意任何车辆不能跨越T时刻的NullCar占位和真实存在的车
  *
  */
-public class Simulator {
+public class BlockSimulator {
 
 
 	private Context ctx = null;
@@ -74,7 +74,7 @@ public class Simulator {
     //规划器
     Planner planner = null;
     
-    public Simulator(Context ctx) {
+    public BlockSimulator(Context ctx) {
     	this.ctx= ctx; 
     	cars = ctx.cars;
     	roads=ctx.roads;
@@ -242,16 +242,20 @@ public class Simulator {
 					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
     	}else {
     		// 可以进行位置更新
-    		for(int i=0;i<cs.curRoadSpeed;i++) {
-    			if(cc[++loc]!=null)
-    			{loc--;break;}// 遇到前车阻挡
+    		for(int i=1;i<=cs.curRoadSpeed;i++) {
+    			if(!_check(cc[++loc]))
+    				{loc--;break;}
+    			else
+    				// 清除路径上遇到的无效占位
+    				cc[loc] = null;// help GC
+
     		}// end for
     		
     		// 如果车辆位置可以更新
     		if(loc>cs.curChannelLocal) {
     			modCot++;
-    			// 移动位置
-        		cc[cs.curChannelLocal]=null;
+    			// 创建占位
+        		cc[cs.curChannelLocal]=createNullCar(cs.curSAT);
         		// 更新车道
         		cc[loc]=cs;
         		cs.curChannelLocal=loc;
@@ -262,7 +266,7 @@ public class Simulator {
     		if(loc>=cLength-cs.curRoadSpeed) {
     			cs.action=CarActions.SCHEDULING;
     			// 获得下一步将要往那条路走
-    			// 若即将结束行程，nextRoadId为-1，turnDirected为直行
+    			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
     			cs.nextRoadId = planner.next(cs.carId, cs.tagCrossId);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
@@ -284,22 +288,17 @@ public class Simulator {
     	}
     }
 
-
-    /**
-     *  检查车辆能不能进入到道路上
-     *  返回车道号和在车道中的位置
-     * @param rcs
-     * @param maxRange
-     * @return
-     */
+    public boolean _check(CarStatus cs) {
+    	return cs==null||(cs.carId<0&&cs.curSAT<curSAT);
+    }
     private CheckedResult checkNextRoad(RoadChannel[] rcs,int maxRange) {
     	int cId=0,cLoc=0;
     	CarStatus[] cc = null;
     	for(cId=0;cId<rcs.length;cId++) {
     		cc=rcs[cId].getChanel();
-    		if(cc[0]!=null) continue;
+    		if(!_check(cc[0])) continue;
 			for(cLoc=1;cLoc<maxRange;cLoc++) 
-				if(cc[cLoc]!=null)break;	
+				if(!_check(cc[cLoc]))break;	
 			cLoc--;
 			break;
     	}// end for;
@@ -324,21 +323,31 @@ public class Simulator {
         	RoadChannel curChannel = road.
         			getInCrossChannels(cs.tagCrossId)[cs.curChannelId];
     		cc = curChannel.getChanel();
-    		// 记录位置
+    		// 记录第一次遇到占位的位置
+    		int recNullCarloc =curChannel.getChannelLength();
     		int loc=cs.curChannelLocal;
     		while(++loc<curChannel.getChannelLength()) {
-    			// 行驶到路口遇阻塞，无法穿过路口
-    			if(cc[loc]!=null)  {loc--;break;}
+    			if(cc[loc]!=null) {
+    				// 记录第一个遇到的位置
+    				if(cc[loc].carId<0&&
+    						cc[loc].curSAT==curSAT&&
+    						recNullCarloc==curChannel.getChannelLength())
+    					recNullCarloc=loc-1;
+    				// 在路口遇到阻塞，无法穿过路口
+    				if(cc[loc].carId>0) {loc--;break;}
+    			}
     		}// end while
 
     		////////////////////////////////////////////////////////////////
     		// 无法行驶到路口////////////////////////////////////////////////
     		if(loc<curChannel.getChannelLength()) {
     			// 保持当前车行为SCEDULING
+    			// 
+    			loc=Math.min(recNullCarloc, loc);
     			// 操作计数加一
     			if(loc>cs.curChannelLocal) modCot++;
-    			// 移动位置
-    			cc[cs.curChannelLocal]=null;
+    			// 设置残影
+    			cc[cs.curChannelLocal]=createNullCar(cs.curSAT);
     			cc[loc]=cs;// 设置原来的位置
     			cs.curChannelLocal = loc;
     			// 更改时间
@@ -351,15 +360,15 @@ public class Simulator {
     			else
     				cs.turnDirected = crosses.get(cs.tagCrossId)
     					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
-    			return cs;
+    			return cs;// 不继续通过路口
     		}
     		
     		//可以行驶到路口，
     		if(cs.tagCrossId==cs.car.getDesCrossId()) {
     			// 如果已经可以完成行程
+    			// 设置占位
     			cs.action=CarActions.STOP;
-    			// 清除位置
-    			cc[cs.curChannelLocal]=null;
+    			cc[cs.curChannelLocal]=createNullCar(cs.curSAT);
     			modCot++;
     			return cs;
     		}
@@ -377,31 +386,29 @@ public class Simulator {
     		
     		////////////////////////////////////////////////////////////////
     		// 当小于等于0或者下一条道无法进入更多的车时，无法跨越当前路口，
-    		// 将车前移到车道末尾
-    		// 
+    		// 将车前移到最近一个T时刻生成的残影占位
+    		// 如果无残影占位，则前移到车道最前端
     		if(nrage<=0||(ckres=checkNextRoad(rcs,nrage))==null) {
-
     			
-    			loc = curChannel.getChannelLength()-1;
+    			loc=recNullCarloc;
+    			if(loc==curChannel.getChannelLength()) 
+    				loc = curChannel.getChannelLength()-1;
     			// 操作计数加一
     			if(loc>cs.curChannelLocal) modCot++;
-    			// 移动位置
-    			cc[cs.curChannelLocal]=null;
-    			cc[loc]=cs;// 设置位置
+    			// 设置占位
+    			cc[cs.curChannelLocal]=createNullCar(cs.curSAT);
+    			cc[loc]=cs;// 设置原来的位置
     			cs.curChannelLocal = loc;
     			// 更改时间
     			cs.curSAT++;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
-    			
-    			/// 也许这里不用请求规划器告知路径，以原来的路径行驶
     			cs.nextRoadId = planner.next(cs.carId, cs.tagCrossId);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
     			else
     				cs.turnDirected = crosses.get(cs.tagCrossId)
     					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
-    			
     			return cs;// 不继续通过路口    			
     		}
     		
@@ -409,9 +416,16 @@ public class Simulator {
     		// 当车可以跨越当前路口，检查是否为终点
     		
     		modCot++;
-    		// 清除位置
-			cc[cs.curChannelLocal]=null;
+    		// 生成一个T时刻的NullCar占位
+    		// 表明T时刻该位置有车、其他T时刻的车无法行驶到这
+			cc[cs.curChannelLocal]=createNullCar(cs.curSAT);
 			
+//			if(cs.tagCrossId==cs.car.getDesCrossId()) {
+//			// 若车辆已经到达终点
+//				cs.action=CarActions.STOP;
+//				// cs.curSAT中保存这结束行程的时刻
+//				return cs;
+//			}
 			
 			cs.action=CarActions.RUNNING;
 			// 更新道路中车最大速度
@@ -430,6 +444,7 @@ public class Simulator {
 			return cs;
    		
     	}// end action=SCEHDULING
+    	
     	// 出现无效Action出现在当前处理中
     	else 
     		throw new IllegalArgumentException("illegel Action "+cs.action);
@@ -460,7 +475,6 @@ public class Simulator {
     		CheckedResult ckres = checkNextRoad(rcs, nrage);
     		// 准备上路的车无法进入下一条道路
     		if(ckres==null) {
-    			// 推迟行驶
     			cs.curSAT++;
         		return cs;
     		}
@@ -492,6 +506,15 @@ public class Simulator {
     		throw new IllegalArgumentException("illegel Action "+cs.action);
     }
     
-       
+    
+    
+    /*
+     * >创建T时间的残影车用于占位
+     */
+    private CarStatus createNullCar(int t) {
+    	return new CarStatus(-1, null, t);
+    }
+    
+    
 	
 }
