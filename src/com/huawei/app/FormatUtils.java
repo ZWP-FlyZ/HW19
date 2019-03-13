@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.huawei.app.model.Answer;
 import com.huawei.app.model.Car;
 import com.huawei.app.model.CarStatus;
 import com.huawei.app.model.Cross;
@@ -79,6 +80,19 @@ public class FormatUtils {
 		.forEach((v)->{
 			int[] p = strs2ints(v);
 			res.put(p[0], new Cross(p));
+		});
+		return res;
+	}
+	
+	public static Map<Integer,Answer> converAnswer(List<String> lines){
+		if(lines==null) return null;
+		Map<Integer,Answer> res = new HashMap<>();
+		lines.stream()
+		.filter(v->v.length()>1)
+		.map(v->v.split(","))
+		.forEach((v)->{
+			int[] p = strs2ints(v);
+			res.put(p[0], new Answer(p));
 		});
 		return res;
 	}

@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
+import com.huawei.app.model.Answer;
 import com.huawei.app.model.Car;
 import com.huawei.app.model.CarStatus;
 import com.huawei.app.model.Cross;
@@ -73,6 +74,66 @@ public class Application {
         
         // 记录所有车辆的行程
         FormatUtils.saveAnswer(answerPath,  ctx.statues.values());
+	}
+	
+	
+public static void rerun(String[] args) {
+		
+        String carPath = args[0];
+        String roadPath = args[1];
+        String crossPath = args[2];
+        String answerPath = args[3];
+        
+        System.out.println("carPath = " + carPath + "\nroadPath = " + roadPath +
+        		"\ncrossPath = " + crossPath + "\nanswerPath = " + answerPath);
+        
+        Context ctx = new Context();
+        
+        ctx.cars = 
+        		FormatUtils.converCars(FormatUtils.loadAndFormat(carPath)); 
+        ctx.roads = 
+        		FormatUtils.converRoad(FormatUtils.loadAndFormat(roadPath)); 
+        ctx.crosses = 
+        		FormatUtils.converCross(FormatUtils.loadAndFormat(crossPath));
+        
+        Map<Integer,Answer> answers = 
+        		FormatUtils.converAnswer(FormatUtils.loadAndFormat(answerPath));
+        
+        System.out.println("load finished!\ncars.size="+ctx.cars.size()+
+        		"\nroads.size="+ctx.roads.size()+"\ncrosses.size="+ctx.crosses.size());        
+        
+        // 重新设置上路时间
+        ctx.cars.values().forEach(car->{
+        	car.setStartTime(answers.get(car.getCarId()).getStartTime());
+        });
+        
+        
+        Instant now = Instant.now();
+        
+        // 完成cars、roads、crosses的一些基础工作
+        preprocess(ctx);
+        // 创建规划器
+//        StaticPathPlanner planner = new StaticPathPlanner(ctx);
+        ReRunPathPlanner planner = new ReRunPathPlanner(ctx);
+        // 创建模拟器
+        Simulator sim = new Simulator(ctx);
+//        BlockSimulator sim = new BlockSimulator(ctx);
+        // 注册规划器
+        sim.registerPlanner(planner);
+        // 初始化
+        planner.init(answers);
+        sim.init();
+//        ctx.cars.keySet().forEach(v->{
+//        	System.out.println(v+":"+planner.showPath(v));
+//        });
+        // 运行模拟器产生运行结果
+        sim.run();
+
+        long runingtime = Duration.between(now, Instant.now()).toMillis();
+        
+        System.out.println("running time:"+runingtime);
+        
+
 	}
 	
 	

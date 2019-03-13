@@ -55,5 +55,9 @@ public class Car {
 		return startTime;
 	}
 
+	public void setStartTime(int startTime) {
+		this.startTime = startTime;
+	}
+
 	
 }
