@@ -37,7 +37,8 @@ import com.huawei.app.model.RoadChannel;
 public class DynamicPathPlanner implements Planner{
 
 	private Context ctx = null;
-    private Map<Integer,Car> cars = null;
+    @SuppressWarnings("unused")
+	private Map<Integer,Car> cars = null;
     private Map<Integer,Road> roads = null;
     private Map<Integer,Cross> crosses = null;
     private Map<Integer,Integer> crossReIdx=null;
