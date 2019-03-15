@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
 
-
-
 import com.huawei.app.Application.Context;
 import com.huawei.app.model.Car;
 import com.huawei.app.model.CarStatus;
@@ -162,7 +160,7 @@ public class BlockSimulator {
     				// 该车到达终点
         			remCarCot--;
         			allCarCot--;
-        			planner.onStop(cs.carId, cs.tagCrossId, curSAT);
+        			planner.onStop(cs.carId, cs.tagCrossId, null);
 
     			}
     			
@@ -185,7 +183,7 @@ public class BlockSimulator {
     				// 该车到达终点
         			remCarCot--;
         			allCarCot--;
-        			planner.onStop(cs.carId, cs.tagCrossId, curSAT);
+        			planner.onStop(cs.carId, cs.tagCrossId, null);
 
     			}
     				
@@ -234,7 +232,7 @@ public class BlockSimulator {
     		// 如果RUNNING行为的车已经在变道区时，需要提前进行路口规划
     		// 直接更改为BLOCK_SCHEDULING,不修改时间
     		cs.action=CarActions.BLOCK_SCHEDULING;
-			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
+			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,null);
 			if(cs.nextRoadId<0) 
 				cs.turnDirected = DriveDirection.FOWARD;
 			else
@@ -267,7 +265,7 @@ public class BlockSimulator {
     			cs.action=CarActions.SCHEDULING;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
-    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
+    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,null);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
     			else
@@ -354,7 +352,7 @@ public class BlockSimulator {
     			cs.curSAT++;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
-    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
+    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,null);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
     			else
@@ -403,7 +401,7 @@ public class BlockSimulator {
     			cs.curSAT++;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
-    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
+    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,null);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
     			else
@@ -456,14 +454,14 @@ public class BlockSimulator {
     	CarStatus[] cc =null;
     	if(cs.action==CarActions.START) {
     		// 规划器判断当前是否需要再使车辆上路
-    		if(!planner.onStart(cs.carId, cs.tagCrossId, remCarCot)) {
+    		if(!planner.onTryStart(cs.carId, cs.tagCrossId,null)) {
     			// 不允许车辆上路,推迟上路
     			cs.curSAT++;
     			return cs;
     		}
     		
     		//可以行驶到路口，检查能否到进入下一条路
-    		cs.nextRoadId  = planner.onScheduling(cs.carId, cs.tagCrossId);
+    		cs.nextRoadId  = planner.onScheduling(cs.carId, cs.tagCrossId,null);
     		Road nextRoad = roads.get(cs.nextRoadId);
     		int nextRoadMaxSpeed = Math.min(nextRoad.getMaxSpeed(), 
     				cs.car.getMaxSpeed());

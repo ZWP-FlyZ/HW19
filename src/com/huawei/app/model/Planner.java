@@ -1,5 +1,7 @@
 package com.huawei.app.model;
 
+import com.huawei.app.Simulator.SimStatus;
+
 /**
  * 
  * @author zwp12
@@ -16,7 +18,7 @@ public interface Planner {
 	 * 如果下一条道路的id和当前车的id相同，将报出异常
 	 * 
 	 */
-	public int onScheduling(int carId,int curCrossId);
+	public int onScheduling(int carId,int curCrossId,SimStatus ss);
 	
 
 	/**
@@ -24,14 +26,23 @@ public interface Planner {
 	 * remCars 表示当期模拟器中车辆的数量
 	 * @return
 	 */
-	public boolean onStart(int carId,int crossId,int curRemCar);
+	public boolean onTryStart(int carId,int crossId,SimStatus ss);
+	
+	/**
+	 *  车辆正式上路时通知
+	 * @param carId
+	 * @param crossId
+	 * @param curRemCar
+	 * @return
+	 */
+	public void onStart(int carId,int crossId,SimStatus ss);
 	
 	/**
 	 * 表示car在curSAT到达路口crossId,结束行程
 	 * remCars 表示当期模拟器中车辆的数量
 	 * @return
 	 */
-	public boolean onStop(int carId,int crossId,int curSAT);
+	public boolean onStop(int carId,int crossId,SimStatus ss);
 	
 	
 }

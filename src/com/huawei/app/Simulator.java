@@ -71,6 +71,8 @@ public class Simulator {
     // 用于控制模拟器结束
     private int allCarCot = 0;
     
+    private SimStatus simStatus = new SimStatus();
+    
     //规划器
     Planner planner = null;
     
@@ -82,6 +84,21 @@ public class Simulator {
     	runningQue = new PriorityQueue<>();
     	schedulingQue = new PriorityQueue<>();
     	startQue = new PriorityQueue<>();
+    }
+    
+    public class SimStatus{
+    	// 获得当前系统中车辆的数量
+    	private SimStatus() {}
+    	public int getRemCarCot() {
+    		return remCarCot;
+    	}
+    	public int getCurSAT() {
+    		return curSAT;
+    	}
+    	// 获得还剩多少车辆没有完成行程
+    	public int getNotOutCar() {
+    		return allCarCot;
+    	}
     }
     
 	/**
@@ -107,6 +124,9 @@ public class Simulator {
     		// 启动行为
     		cs.action=CarActions.START;
     		cs.curSAT=car.getStartTime();
+    		
+    		// 当前道路ID设置为-1，
+    		cs.curRoadId=-1;
     		
     		cs.frmCrossId = car.getOriCrossId();
     		// 获取道路出口的CrossId
@@ -162,7 +182,7 @@ public class Simulator {
     				// 该车到达终点
         			remCarCot--;
         			allCarCot--;
-        			planner.onStop(cs.carId, cs.tagCrossId, curSAT);
+        			planner.onStop(cs.carId, cs.tagCrossId, simStatus);
     			}
     			
     		}
@@ -184,7 +204,7 @@ public class Simulator {
     				// 该车到达终点
         			remCarCot--;
         			allCarCot--;
-        			planner.onStop(cs.carId, cs.tagCrossId, curSAT);
+        			planner.onStop(cs.carId, cs.tagCrossId, simStatus);
         			
     			}
     				
@@ -233,7 +253,7 @@ public class Simulator {
     		// 如果RUNNING行为的车已经在变道区时，需要提前进行路口规划
     		// 直接更改为BLOCK_SCHEDULING,不修改时间
     		cs.action=CarActions.BLOCK_SCHEDULING;
-			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
+			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,simStatus);
 			if(cs.nextRoadId<0) 
 				cs.turnDirected = DriveDirection.FOWARD;
 			else
@@ -262,7 +282,7 @@ public class Simulator {
     			cs.action=CarActions.SCHEDULING;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为直行
-    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
+    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,simStatus);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
     			else
@@ -344,7 +364,7 @@ public class Simulator {
     			cs.curSAT++;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
-    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
+    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,simStatus);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
     			else
@@ -394,7 +414,7 @@ public class Simulator {
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
     			
     			/// 也许这里不用请求规划器告知路径，以原来的路径行驶
-    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId);
+    			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,simStatus);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
     			else
@@ -440,14 +460,14 @@ public class Simulator {
     	CarStatus[] cc =null;
     	if(cs.action==CarActions.START) {
     		// 规划器判断当前是否需要再使车辆上路
-    		if(!planner.onStart(cs.carId, cs.tagCrossId, remCarCot)) {
+    		if(!planner.onTryStart(cs.carId, cs.tagCrossId, simStatus)) {
     			// 不允许车辆上路,推迟上路
     			cs.curSAT++;
     			return cs;
     		}
     		
     		//可以行驶到路口，检查能否到进入下一条路
-    		cs.nextRoadId  = planner.onScheduling(cs.carId, cs.tagCrossId);
+    		cs.nextRoadId  = planner.onScheduling(cs.carId, cs.tagCrossId,simStatus);
     		Road nextRoad = roads.get(cs.nextRoadId);
     		int nextRoadMaxSpeed = Math.min(nextRoad.getMaxSpeed(), 
     				cs.car.getMaxSpeed());
@@ -463,6 +483,9 @@ public class Simulator {
     			cs.curSAT++;
         		return cs;
     		}
+    		
+    		// 通知规划器正式上路
+    		planner.onStart(cs.carId, cs.tagCrossId, simStatus);
     		// 更新计数
     		modCot++;
     		// 更新车辆数量

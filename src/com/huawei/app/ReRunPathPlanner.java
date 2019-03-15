@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.huawei.app.Application.Context;
+import com.huawei.app.Simulator.SimStatus;
 import com.huawei.app.model.Answer;
 import com.huawei.app.model.Car;
 import com.huawei.app.model.CarStatus;
@@ -19,7 +20,7 @@ import com.huawei.app.model.Road;
  * 
  * @author zwp12
  *
- * 动态静态可实现的规划器模板
+ * 
  *
  *	测试Answer的规划器
  *	
@@ -110,7 +111,7 @@ public class ReRunPathPlanner implements Planner{
 	}
 	
 	@Override
-	public int onScheduling(int carId, int curCrossId) {
+	public int onScheduling(int carId, int curCrossId,SimStatus ss) {
 		
 		CarStatus cs = ctx.statues.get(carId);
 		Car car = cs.car;
@@ -129,15 +130,15 @@ public class ReRunPathPlanner implements Planner{
 	}
 	
 	@Override
-	public boolean onStart(int carId, int crossId, int remCars) {
+	public boolean onTryStart(int carId, int crossId, SimStatus ss) {
 		// TODO Auto-generated method stub
 		return true;
 	}
 	
 	@Override
-	public boolean onStop(int carId, int crossId, int curSAT) {
+	public boolean onStop(int carId, int crossId, SimStatus ss) {
 		// TODO Auto-generated method stub
-		System.err.println("Car:"+carId+"->Cross:"+crossId+"->time:"+curSAT);
+		System.err.println("Car:"+carId+"->Cross:"+crossId+"->time:"+ss.getCurSAT());
 		return false;
 	}
 	
@@ -149,6 +150,14 @@ public class ReRunPathPlanner implements Planner{
 			node=node.next;
 		}
 		return sb.toString();
+	}
+
+
+
+	@Override
+	public void onStart(int carId, int crossId, SimStatus ss) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 

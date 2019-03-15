@@ -68,6 +68,8 @@ public class Application {
         // 运行模拟器产生运行结果
         sim.run();
 
+        planner.showCal();
+        
         long runingtime = Duration.between(now, Instant.now()).toMillis();
         
         System.out.println("running time:"+runingtime);
