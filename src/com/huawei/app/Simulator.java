@@ -204,7 +204,7 @@ public class Simulator {
         				// 上一时刻车辆通过路口失败，需要继续等待路口调度
         				startQue.add(cs);
         		}
-    		System.out.println("Simulator modCot="+modCot+" curCar="+remCarCot+" car="+allCarCot);
+    		//System.out.println("Simulator modCot="+modCot+" curCar="+remCarCot+" car="+allCarCot);
     		if(modCot==0) {System.err.println("Simulator may be dead locked!"); break;}
     		if(allCarCot>0) curSAT++;//继续执行模拟
     		else break;// 正常结束

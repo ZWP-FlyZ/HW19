@@ -253,13 +253,13 @@ public class DynamicPathPlanner implements Planner{
 	@Override
 	public boolean onStart(int carId, int crossId, int remCars) {
 		// TODO Auto-generated method stub
-		return remCars<300;
+		return remCars<600;
 	}
 	
 	@Override
 	public boolean onStop(int carId, int crossId, int curSAT) {
 		// TODO Auto-generated method stub
-		System.err.println("Car:"+carId+"->Cross:"+crossId+"->time:"+curSAT);
+//		System.err.println("Car:"+carId+"->Cross:"+crossId+"->time:"+curSAT);
 		return false;
 	}
 	
