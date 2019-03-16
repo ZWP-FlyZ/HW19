@@ -31,7 +31,7 @@ import com.huawei.app.model.RoadChannel;
  *	方法3（局部静态，整体动态）：所有车辆会保留若干时间前计算的一条路线，到达时间有限期后失效重新计算路线
  *	方法4（实时）：所有车辆在路口调度之前必须重新计算当前最优路线
  *	
- *	以上方法可以配合 onStart() 来限制在系统中车辆的数量
+ *	以上方法可以配合 onTryStart() 来限制在系统中车辆的数量
  *	
  *
  */
@@ -44,7 +44,9 @@ public class DynamicPathPlanner2 implements Planner{
     private Map<Integer,Cross> crosses = null;
     private Map<Integer,Integer> crossReIdx=null;
     private List<Integer>  crossIdx =null;
-
+    private int[]  crossStart = null;
+    private int[] crossStop = null;
+    private int[] crossPassed = null;
 	
     // 道路图
     private Road[][] graph = null;
@@ -78,6 +80,10 @@ public class DynamicPathPlanner2 implements Planner{
     	crosses=ctx.crosses;
     	createCrossIdx(crosses.keySet());
     	initCarPath = new HashMap<>();
+    	crossStart = new int[crosses.size()];
+    	crossStop = new int[crosses.size()];
+    	crossPassed = new int[crosses.size()];
+    
     }
     
 	
@@ -153,18 +159,12 @@ public class DynamicPathPlanner2 implements Planner{
 		RoadChannel[] rcs = road.getOutCrossChannels(road.getFromCrossId());
 		for(RoadChannel rc :rcs) {
 			cc = rc.getChanel();
+//			if(cc[0]!=null) continue;
 			for(CarStatus ct:cc)
 				if(ct!=null&&ct.carId>=0)cout++;
 		}
-		if(road.isDuplex()) {
-			rcs = road.getInCrossChannels(road.getToCrossId());
-			for(RoadChannel rc :rcs) {
-				cc = rc.getChanel();
-				for(CarStatus ct:cc)
-					if(ct!=null&&ct.carId>=0)cout++;
-			}
-			cout = cout/2;
-		}
+		
+
 
 		return baseTime+cout;
 	}
@@ -234,6 +234,8 @@ public class DynamicPathPlanner2 implements Planner{
 	@Override
 	public int onScheduling(int carId, int curCrossId,SimStatus ss) {
 		
+		crossPassed[cIdx(curCrossId)]++;
+		
 		CarStatus cs = ctx.statues.get(carId);
 		Car car = cs.car;
 		// 注意已经到达目的地，返回-1
@@ -241,7 +243,7 @@ public class DynamicPathPlanner2 implements Planner{
 			return -1;
 		
 		CarPathNode cur;
-//		initCarPath.put(carId,null);
+		initCarPath.put(carId,null);
 		if((cur=initCarPath.get(carId))==null) {
 			updateG(cs);
 			cur = dij(car,curCrossId,car.getDesCrossId());
@@ -258,13 +260,16 @@ public class DynamicPathPlanner2 implements Planner{
 	@Override
 	public boolean onTryStart(int carId, int crossId, SimStatus ss) {
 		// TODO Auto-generated method stub
-		return ss.getRemCarCot()<600;
+		
+		return ss.getRemCarCot()<300;
 	}
 	
 	@Override
 	public boolean onStop(int carId, int crossId, SimStatus ss) {
 		// TODO Auto-generated method stub
 		System.err.println("Car:"+carId+"->Cross:"+crossId+"->time:"+ss.getCurSAT());
+		crossStop[cIdx(crossId)]++;
+		
 		return false;
 	}
 	
@@ -278,12 +283,37 @@ public class DynamicPathPlanner2 implements Planner{
 		return sb.toString();
 	}
 
+	public void showCal() {
+		System.err.println(Arrays.toString(crossStart));
+		System.err.println(Arrays.toString(crossStop));
+		System.err.println(Arrays.toString(crossPassed));
+		double sum = 0.0;
+		for(int a:crossPassed) {
+			sum+=a*1.0/crossPassed.length;
+		}
+		System.err.println(sum);
+	}
 
 	@Override
 	public void onStart(int carId, int crossId, SimStatus ss) {
 		// TODO Auto-generated method stub
+		crossStart[cIdx(crossId)]++;
+	}
+
+
+
+
+	@Override
+	public void onPassedCross(int carId, int curCrossId, SimStatus ss) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onPassedRoad(int carId, int roaId, SimStatus ss) {
+		// TODO Auto-generated method stub
 		
 	}
 	
-
+	
 }

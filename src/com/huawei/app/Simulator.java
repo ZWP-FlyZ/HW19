@@ -154,6 +154,7 @@ public class Simulator {
     public int run() {
     	System.err.println("Simulator start run,AST="+curSAT+", car.size="+remCarCot);
     	CarStatus cs = null;
+    	boolean onRoadPassFlag = true;
     	while(true) {
     		// 当前模拟器中还有车辆在行驶
     		// 重置操作计数
@@ -165,7 +166,9 @@ public class Simulator {
     			// 从running队列中取出当前时刻要更新位置的车辆
     			runningQue.poll();
     			// 更新cs的状态
+    			
     			cs = updateRunningCarStatus(cs);
+    			onRoadPassFlag = cs.action == CarActions.SCHEDULING;
     			if(cs.action==CarActions.BLOCK_SCHEDULING) {
     				// 车辆以处于变道区，提前进行路口规划
     				cs.action=CarActions.SCHEDULING;
@@ -175,16 +178,19 @@ public class Simulator {
     			if(cs.action==CarActions.RUNNING)
     				// 如果还没有到达变道区，
     				runningQue.add(cs);
-    			else if(cs.action==CarActions.SCHEDULING) 
+    			else if(cs.action==CarActions.SCHEDULING) {
     				// 如果到达变道区，加入到scheduling队列中
+    				// 通知道路位置变更结束
     				schedulingQue.add(cs);
+    			}
     			else if(cs.action==CarActions.STOP) {
     				// 该车到达终点
         			remCarCot--;
         			allCarCot--;
         			planner.onStop(cs.carId, cs.tagCrossId, simStatus);
     			}
-    			
+    			if(onRoadPassFlag)
+    				planner.onPassedRoad(cs.carId, cs.curRoadId, simStatus);
     		}
     		
     		// 处理路口调度的车
@@ -194,12 +200,17 @@ public class Simulator {
     			schedulingQue.poll();
     			// 将车进行路口调度
     			cs = schedulingCarStatus(cs);
-    			if(cs.action==CarActions.RUNNING)
+    			if(cs.action==CarActions.RUNNING) {
     				// 路口调度成功，继续道路行驶
+    				planner.onPassedCross(cs.carId, cs.frmCrossId, simStatus);
     				runningQue.add(cs);
-    			else if(cs.action==CarActions.SCHEDULING)
+    			}
+
+    			else if(cs.action==CarActions.SCHEDULING) {
     				// 上一时刻车辆通过路口失败，需要继续等待路口调度
     				schedulingQue.add(cs);
+    			}
+
     			else if(cs.action==CarActions.STOP) {
     				// 该车到达终点
         			remCarCot--;
@@ -425,7 +436,7 @@ public class Simulator {
     		}
     		
     		////////////////////////////////////////////////////////////////
-    		// 当车可以跨越当前路口，检查是否为终点
+    	
     		
     		modCot++;
     		// 清除位置
@@ -440,6 +451,8 @@ public class Simulator {
 			cs.curChannelLocal=ckres.channelLocal;
 			cs.frmCrossId=cs.tagCrossId;
 			cs.tagCrossId = road.getAnotherCrossId(cs.frmCrossId);
+			// 记录进入道路的时间
+			cs.inRoadSAT = curSAT;
 			cs.curSAT++;
 			// 记录行驶路径
 			cs.addPassedRoad(cs.curRoadId);
@@ -502,6 +515,8 @@ public class Simulator {
 			// 记录最开始的时刻，记录行驶路径
 			cs.relStartTime=cs.curSAT;
 			cs.addPassedRoad(cs.curRoadId);
+			// 记录进入道路的时间
+			cs.inRoadSAT = curSAT;
 			cs.curSAT++;
 			//更新新车道中的位置
 			cc = rcs[cs.curChannelId].getChanel();

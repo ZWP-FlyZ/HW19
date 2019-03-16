@@ -159,6 +159,27 @@ public class ReRunPathPlanner implements Planner{
 		// TODO Auto-generated method stub
 		
 	}
+
+
+
+	@Override
+	public void onPassedCross(int carId, int curCrossId, SimStatus ss) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	@Override
+	public void onPassedRoad(int carId, int roaId, SimStatus ss) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+
+
 	
 
 }

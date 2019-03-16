@@ -38,6 +38,25 @@ public interface Planner {
 	public void onStart(int carId,int crossId,SimStatus ss);
 	
 	/**
+	 *  >当某车通过路口时，通知规划器
+	 * @param carId
+	 * @param curCrossId
+	 * @param ss
+	 * @return
+	 */
+	public void onPassedCross(int carId,int curCrossId,SimStatus ss);
+	
+	
+	/**
+	 *  >当某车到达变道区准备通过路口时，通知规划器
+	 * @param carId
+	 * @param curCrossId
+	 * @param ss
+	 * @return
+	 */
+	public void onPassedRoad(int carId,int roaId,SimStatus ss);
+	
+	/**
 	 * 表示car在curSAT到达路口crossId,结束行程
 	 * remCars 表示当期模拟器中车辆的数量
 	 * @return

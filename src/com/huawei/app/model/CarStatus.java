@@ -51,6 +51,10 @@ public class CarStatus implements Comparable<CarStatus>{
 	public int turnDirected;
 	
 	
+	// 进入某条道路时当前SAT
+	public int inRoadSAT;
+		
+	
 	public enum CarActions{
 		/*
 		 *  >当前车辆处于准备上路行为中，
@@ -152,20 +156,7 @@ public class CarStatus implements Comparable<CarStatus>{
 				else if(o.turnDirected == DriveDirection.FOWARD) return 1;
 				else return -1;
 			}
-						
-			
-			// 车道相同的车，优先处理同一条路中的所有车
-			// 注意这里可能有问题、无法辨别出哪些道路的最小车道会被先调度
-			// 因此存在一种情况：下一条道路没有先被调度，后一条道路出现阻塞的情况
-//			if(curRoadId != o.curRoadId) {
-//				if(curRoadId==o.nextRoadId) 
-//					return -1;// 当前道路是o的将要进入的道路，则优先处理curRoadId
-//				else if(nextRoadId==o.curRoadId)
-//					return 1;// 
-//				//这里会优先处理道路ID大的车
-////				return o.curRoadId-curRoadId; 
-//			}
-			
+									
 			return 0;
 		}else if(action==CarActions.START) {
 			

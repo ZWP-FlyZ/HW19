@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.net.ssl.SSLEngineResult.Status;
+import javax.swing.text.html.CSS;
+
 import com.huawei.app.Application.Context;
 import com.huawei.app.Simulator.SimStatus;
 import com.huawei.app.model.Car;
@@ -18,6 +21,7 @@ import com.huawei.app.model.Cross;
 import com.huawei.app.model.Planner;
 import com.huawei.app.model.Road;
 import com.huawei.app.model.RoadChannel;
+import com.huawei.app.model.WinMean;
 
 /**
  * 
@@ -54,13 +58,16 @@ public class DynamicPathPlanner implements Planner{
     private int[][] G = null;
     
     // 更新
-    private int UPDATE_DELAY=10;
-    
+    private int UPDATE_DELAY=2;
+    private int WINDOW_SIZE =2;
     // 当前系统时间
     private int curSAT = -1;
-    
+    private int lastNullSAT = -1;
+    // 车辆的路径
 	private Map<Integer,CarPathNode> initCarPath=null;
-    
+    private Map<Integer,TimeWinMean> roadWinMean = null;
+	
+	
     private class CarPathNode{
     	int curCrossId;
     	int nextRoadId;
@@ -72,22 +79,50 @@ public class DynamicPathPlanner implements Planner{
     	}
     }
     
-    
+    private class TimeWinMean{
+    	int cT=0;
+    	WinMean wm =  null;
+    	WinMean ctWm=null;
+    	TimeWinMean(int size){
+    		cT=-1;
+    		wm = new WinMean(size);
+    		ctWm=new WinMean(size);
+    	}
+    	private void synT(int curT) {
+    		if(cT<0) cT=curT;
+    		else if(cT<curT) {
+    			while(cT<curT) { wm.next(); ctWm.next();cT++;};
+    		}
+    		else if(cT>curT) 
+    			throw new IllegalArgumentException("cT>curT: "+cT+","+curT);
+    	}
+    	int add(int curT,int v) {
+    		synT(curT);
+    		ctWm.add(1);
+    		return wm.add(v);
+    	}
+    	double getMean(int curT) {
+    		synT(curT);
+    		if(ctWm.getMean()==0.0) return 0.0;
+    		return wm.getMean()/ctWm.getMean();
+    	}
+        	
+    }
+        
     public DynamicPathPlanner(Context ctx) {
     	this.ctx= ctx; 
     	cars = ctx.cars;
     	roads=ctx.roads;
     	crosses=ctx.crosses;
     	createCrossIdx(crosses.keySet());
-    	initCarPath = new HashMap<>();
+    	initCarPath = new HashMap<>(cars.size());
+    	roadWinMean = new HashMap<>(roads.size());
     	crossStart = new int[crosses.size()];
     	crossStop = new int[crosses.size()];
     	crossPassed = new int[crosses.size()];
-    
     }
     
-	
-    
+	  
 	/**
 	 *  初始化将所有车初始方法缓存
 	 */
@@ -96,6 +131,7 @@ public class DynamicPathPlanner implements Planner{
 		graph = new Road[crosses.size()][crosses.size()];
 		G = new int[crosses.size()][crosses.size()];
 		roads.values().forEach(road->{
+			roadWinMean.put(road.getRoadId(), new TimeWinMean(WINDOW_SIZE));
 			int i=cIdx(road.getFromCrossId());
 			int j=cIdx(road.getToCrossId());
 			graph[i][j]=road;
@@ -105,7 +141,7 @@ public class DynamicPathPlanner implements Planner{
 	}
 	
 	private void createCrossIdx(Collection<Integer> crossIds){
-		Map<Integer,Integer> res = new HashMap<>();
+		Map<Integer,Integer> res = new HashMap<>(crosses.size());
 		List<Integer> ids = crossIds.stream()
 			.sorted((a,b)->Integer.compare(a, b))
 			.collect(Collectors.toCollection(ArrayList::new));
@@ -151,20 +187,11 @@ public class DynamicPathPlanner implements Planner{
 	 * @return
 	 */
 	private int cost(Road road,CarStatus cs) {
-		
+		int more = (int) Math.ceil(roadWinMean.get(road.getRoadId()).getMean(curSAT));
 		int spd = Math.min(road.getMaxSpeed(),cs.car.getMaxSpeed());
 		int baseTime = (int)Math.ceil(road.getRoadLength()*1.0/spd);
-		int cout = 0;
-		CarStatus[] cc = null;
-		RoadChannel[] rcs = road.getOutCrossChannels(road.getFromCrossId());
-		for(RoadChannel rc :rcs) {
-			cc = rc.getChanel();
-			for(CarStatus ct:cc)
-				if(ct!=null&&ct.carId>=0)cout++;
-		}
-
-
-		return baseTime+cout;
+//		System.out.println(spd);
+		return baseTime+more;
 	}
 	
 	
@@ -232,6 +259,7 @@ public class DynamicPathPlanner implements Planner{
 	@Override
 	public int onScheduling(int carId, int curCrossId,SimStatus ss) {
 		
+		if(curSAT<0||curSAT<ss.getCurSAT()) curSAT = ss.getCurSAT();
 		crossPassed[cIdx(curCrossId)]++;
 		
 		CarStatus cs = ctx.statues.get(carId);
@@ -241,7 +269,11 @@ public class DynamicPathPlanner implements Planner{
 			return -1;
 		
 		CarPathNode cur;
-//		initCarPath.put(carId,null);
+		if(lastNullSAT<0||lastNullSAT==curSAT) {
+			initCarPath.put(carId,null);
+			lastNullSAT=curSAT;
+		}
+		if(lastNullSAT==curSAT-1) lastNullSAT=curSAT+UPDATE_DELAY;
 		if((cur=initCarPath.get(carId))==null) {
 			updateG(cs);
 			cur = dij(car,curCrossId,car.getDesCrossId());
@@ -259,7 +291,7 @@ public class DynamicPathPlanner implements Planner{
 	public boolean onTryStart(int carId, int crossId, SimStatus ss) {
 		// TODO Auto-generated method stub
 		
-		return ss.getRemCarCot()<500;
+		return false||ss.getRemCarCot()<1000;
 	}
 	
 	@Override
@@ -296,6 +328,26 @@ public class DynamicPathPlanner implements Planner{
 	public void onStart(int carId, int crossId, SimStatus ss) {
 		// TODO Auto-generated method stub
 		crossStart[cIdx(crossId)]++;
+	}
+
+
+	@Override
+	public void onPassedCross(int carId, int curCrossId, SimStatus ss) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onPassedRoad(int carId, int roadId, SimStatus ss) {
+		// TODO Auto-generated method stub
+		
+		CarStatus cs = ctx.statues.get(carId);
+		int basetime = cs.curChannelLocal/cs.curRoadSpeed;
+		int realtime = ss.getCurSAT()-cs.inRoadSAT;
+		roadWinMean.get(roadId).add( ss.getCurSAT(), basetime+realtime);
+//		System.out.println(ss.getCurSAT()+","+basetime+","+realtime);
+
+		
 	}
 	
 	
