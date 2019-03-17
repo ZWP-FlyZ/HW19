@@ -53,8 +53,8 @@ public class DynamicPathPlanner implements Planner{
     private int[][] G = null;
     
     // 更新
-    private int UPDATE_DELAY=4;
-    private int WINDOW_SIZE =4;
+    private int UPDATE_DELAY=6;
+    private int WINDOW_SIZE =10;
     // 当前系统时间
     private int curSAT = -1;
     private int lastNullSAT = -1;

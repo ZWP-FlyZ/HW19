@@ -360,8 +360,9 @@ public class Simulator {
     	if(cs.action==CarActions.SCHEDULING) {
     		
     		Road road = roads.get(cs.curRoadId);
-        	RoadChannel curChannel = road.
-        			getInCrossChannels(cs.tagCrossId)[cs.curChannelId];
+    		RoadChannel[] channels = road.
+        			getInCrossChannels(cs.tagCrossId);
+        	RoadChannel curChannel = channels[cs.curChannelId];
     		cc = curChannel.getChanel();
     		// 记录位置
     		int loc=cs.curChannelLocal;
@@ -370,10 +371,27 @@ public class Simulator {
     			if(cc[loc]!=null)  {loc--;break;}
     		}// end while
 
+    		
+    		
+    		
     		////////////////////////////////////////////////////////////////
-    		// 无法行驶到路口////////////////////////////////////////////////
-    		if(loc<curChannel.getChannelLength()) {
+    		
+    		// 检查左侧是否存在车
+    		boolean noCarInLeft = true;
+    		if(cs.curChannelId>0) {
+    			RoadChannel rc = channels[cs.curChannelId-1];
+    			if(rc.getChanel()[cs.curChannelLocal]!=null) 
+    				noCarInLeft = false;
+    			
+    		}
+
+    		
+    		// 无法行驶到路口 和 左侧有车无法
+    		if(!noCarInLeft||loc<curChannel.getChannelLength()) {
     			// 保持当前车行为SCEDULING
+    			
+    			if(loc==road.getRoadLength()) loc--;
+    			
     			// 操作计数加一
     			if(loc>cs.curChannelLocal) modCot++;
     			// 移动位置
@@ -396,6 +414,9 @@ public class Simulator {
     					.getTurnDireByRoad(cs.curRoadId, cs.nextRoadId);
     			return cs;
     		}
+    		
+    		    		
+    		
     		
     		//可以行驶到路口，
     		if(cs.tagCrossId==cs.car.getDesCrossId()) {
