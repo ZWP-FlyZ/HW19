@@ -127,6 +127,7 @@ public class Simulator {
     		
     		// 当前道路ID设置为-1，
     		cs.curRoadId=-1;
+    		cs.lastAskScheSAT=-1;
     		
     		cs.frmCrossId = car.getOriCrossId();
     		// 获取道路出口的CrossId
@@ -263,6 +264,10 @@ public class Simulator {
     	if(loc>=cLength-cs.curRoadSpeed) {
     		// 如果RUNNING行为的车已经在变道区时，需要提前进行路口规划
     		// 直接更改为BLOCK_SCHEDULING,不修改时间
+    		if(cs.askScheCrossId!=cs.tagCrossId) {
+    			cs.askScheCrossId = cs.tagCrossId;
+    			cs.lastAskScheSAT = curSAT;
+    		}
     		cs.action=CarActions.BLOCK_SCHEDULING;
 			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,simStatus);
 			if(cs.nextRoadId<0) 
@@ -293,6 +298,10 @@ public class Simulator {
     			cs.action=CarActions.SCHEDULING;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为直行
+        		if(cs.askScheCrossId!=cs.tagCrossId) {
+        			cs.askScheCrossId = cs.tagCrossId;
+        			cs.lastAskScheSAT = curSAT;
+        		}
     			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,simStatus);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
@@ -375,6 +384,10 @@ public class Simulator {
     			cs.curSAT++;
     			// 获得下一步将要往那条路走
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
+        		if(cs.askScheCrossId!=cs.tagCrossId) {
+        			cs.askScheCrossId = cs.tagCrossId;
+        			cs.lastAskScheSAT = curSAT;
+        		}
     			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,simStatus);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
@@ -425,6 +438,10 @@ public class Simulator {
     			// 若即将结束行程，nextRoadId为-1，turnDirected为自行
     			
     			/// 也许这里不用请求规划器告知路径，以原来的路径行驶
+        		if(cs.askScheCrossId!=cs.tagCrossId) {
+        			cs.askScheCrossId = cs.tagCrossId;
+        			cs.lastAskScheSAT = curSAT;
+        		}
     			cs.nextRoadId = planner.onScheduling(cs.carId, cs.tagCrossId,simStatus);
     			if(cs.nextRoadId<0) 
     				cs.turnDirected = DriveDirection.FOWARD;
@@ -479,6 +496,10 @@ public class Simulator {
     			return cs;
     		}
     		
+    		if(cs.askScheCrossId!=cs.tagCrossId) {
+    			cs.askScheCrossId = cs.tagCrossId;
+    			cs.lastAskScheSAT = curSAT;
+    		}
     		//可以行驶到路口，检查能否到进入下一条路
     		cs.nextRoadId  = planner.onScheduling(cs.carId, cs.tagCrossId,simStatus);
     		Road nextRoad = roads.get(cs.nextRoadId);

@@ -10,9 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.net.ssl.SSLEngineResult.Status;
-import javax.swing.text.html.CSS;
-
 import com.huawei.app.Application.Context;
 import com.huawei.app.Simulator.SimStatus;
 import com.huawei.app.model.Car;
@@ -20,7 +17,6 @@ import com.huawei.app.model.CarStatus;
 import com.huawei.app.model.Cross;
 import com.huawei.app.model.Planner;
 import com.huawei.app.model.Road;
-import com.huawei.app.model.RoadChannel;
 import com.huawei.app.model.WinMean;
 
 /**
@@ -42,7 +38,6 @@ import com.huawei.app.model.WinMean;
 public class DynamicPathPlanner implements Planner{
 
 	private Context ctx = null;
-    @SuppressWarnings("unused")
 	private Map<Integer,Car> cars = null;
     private Map<Integer,Road> roads = null;
     private Map<Integer,Cross> crosses = null;
@@ -58,15 +53,15 @@ public class DynamicPathPlanner implements Planner{
     private int[][] G = null;
     
     // 更新
-    private int UPDATE_DELAY=2;
-    private int WINDOW_SIZE =2;
+    private int UPDATE_DELAY=4;
+    private int WINDOW_SIZE =4;
     // 当前系统时间
     private int curSAT = -1;
     private int lastNullSAT = -1;
     // 车辆的路径
 	private Map<Integer,CarPathNode> initCarPath=null;
     private Map<Integer,TimeWinMean> roadWinMean = null;
-	
+    private Map<Integer,TimeWinMean> crossWinMean = null;
 	
     private class CarPathNode{
     	int curCrossId;
@@ -108,7 +103,8 @@ public class DynamicPathPlanner implements Planner{
     	}
         	
     }
-        
+     
+    
     public DynamicPathPlanner(Context ctx) {
     	this.ctx= ctx; 
     	cars = ctx.cars;
@@ -117,6 +113,7 @@ public class DynamicPathPlanner implements Planner{
     	createCrossIdx(crosses.keySet());
     	initCarPath = new HashMap<>(cars.size());
     	roadWinMean = new HashMap<>(roads.size());
+    	crossWinMean = new HashMap<>(crosses.size());
     	crossStart = new int[crosses.size()];
     	crossStop = new int[crosses.size()];
     	crossPassed = new int[crosses.size()];
@@ -137,6 +134,9 @@ public class DynamicPathPlanner implements Planner{
 			graph[i][j]=road;
 			if(road.isDuplex()) 
 				graph[j][i]=road;
+		});
+		crosses.values().forEach(cross->{
+			crossWinMean.put(cross.getCrossId(),new TimeWinMean(WINDOW_SIZE));
 		});
 	}
 	
@@ -160,8 +160,10 @@ public class DynamicPathPlanner implements Planner{
 					Road road = graph[i][j];
 					if(road.getRoadId()==cs.curRoadId)
 						G[i][j]=Integer.MAX_VALUE;
-					else
-						G[i][j]=cost(road,cs);
+					else{
+						int crossmore = (int) Math.ceil(crossWinMean.get(cReId(i)).getMean(curSAT));
+						G[i][j]=cost(road,cs)+crossmore;	
+					}
 				}
 			}
 	}
@@ -188,6 +190,7 @@ public class DynamicPathPlanner implements Planner{
 	 */
 	private int cost(Road road,CarStatus cs) {
 		int more = (int) Math.ceil(roadWinMean.get(road.getRoadId()).getMean(curSAT));
+		
 		int spd = Math.min(road.getMaxSpeed(),cs.car.getMaxSpeed());
 		int baseTime = (int)Math.ceil(road.getRoadLength()*1.0/spd);
 //		System.out.println(spd);
@@ -334,7 +337,9 @@ public class DynamicPathPlanner implements Planner{
 	@Override
 	public void onPassedCross(int carId, int curCrossId, SimStatus ss) {
 		// TODO Auto-generated method stub
-		
+		CarStatus cs = ctx.statues.get(carId);
+		int deltime = ss.getCurSAT()-cs.lastAskScheSAT;
+		crossWinMean.get(curCrossId).add(ss.getCurSAT(), deltime);
 	}
 
 	@Override
@@ -344,7 +349,7 @@ public class DynamicPathPlanner implements Planner{
 		CarStatus cs = ctx.statues.get(carId);
 		int basetime = cs.curChannelLocal/cs.curRoadSpeed;
 		int realtime = ss.getCurSAT()-cs.inRoadSAT;
-		roadWinMean.get(roadId).add( ss.getCurSAT(), basetime+realtime);
+		roadWinMean.get(roadId).add( ss.getCurSAT(), realtime-basetime);
 //		System.out.println(ss.getCurSAT()+","+basetime+","+realtime);
 
 		

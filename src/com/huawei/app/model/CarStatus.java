@@ -54,6 +54,8 @@ public class CarStatus implements Comparable<CarStatus>{
 	// 进入某条道路时当前SAT
 	public int inRoadSAT;
 		
+	public int askScheCrossId;
+	public int lastAskScheSAT;
 	
 	public enum CarActions{
 		/*
