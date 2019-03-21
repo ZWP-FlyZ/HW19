@@ -143,7 +143,7 @@ public class CarStatus implements Comparable<CarStatus>{
 
 			// 优先处理处于可被调度的车
 			// 优先调度位置在前的车
-			if(o.curChannelId!=curChannelLocal)
+			if(o.curChannelLocal!=curChannelLocal)
 				return o.curChannelLocal-curChannelLocal;
 			
 			// 优先调度车道小的车
