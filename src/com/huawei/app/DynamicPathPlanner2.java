@@ -314,6 +314,14 @@ public class DynamicPathPlanner2 implements Planner{
 		// TODO Auto-generated method stub
 		
 	}
+
+
+
+	@Override
+	public int onInitCarStartTime(int carId) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 	
 	
 }

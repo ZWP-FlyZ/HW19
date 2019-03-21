@@ -13,6 +13,20 @@ public interface Planner {
 
 	
 	/**
+	 * 
+	 * 
+	 * 设置所有车辆自定义请求上路最早出发时间，
+	 * 
+	 * 若返回数值小于原始出发时间时，所有车辆以默认出发时间向规划器请求上路
+	 * 
+	 * 
+	 * @param newStartTime
+	 */
+	
+	public int  onInitCarStartTime(int carId);
+	
+	
+	/**
 	 * >返回carId车接下来要进入的RoadId
 	 * @return 正常返回一个道路ID,curCrossId已经和目的地相同，则需要返回-1
 	 * 如果下一条道路的id和当前车的id相同，将报出异常

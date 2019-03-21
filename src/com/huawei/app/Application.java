@@ -4,6 +4,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
+import com.huawei.app.ana.AnaCarPath;
+import com.huawei.app.ana.AnaPathPlanner;
+import com.huawei.app.ana.AnaPathPlanner3;
+import com.huawei.app.ana.AnaRecDynamicPathPlanner;
 import com.huawei.app.model.Answer;
 import com.huawei.app.model.Car;
 import com.huawei.app.model.CarStatus;
@@ -61,7 +65,7 @@ public class Application {
         sim.registerPlanner(planner);
         // 初始化
         planner.init();
-        sim.init();
+
 //        ctx.cars.keySet().forEach(v->{
 //        	System.out.println(v+":"+planner.showPath(v));
 //        });
@@ -79,7 +83,8 @@ public class Application {
 	}
 	
 	
-public static void rerun(String[] args) {
+	
+	public static void rerun(String[] args) {
 		
         String carPath = args[0];
         String roadPath = args[1];
@@ -124,7 +129,7 @@ public static void rerun(String[] args) {
         sim.registerPlanner(planner);
         // 初始化
         planner.init(answers);
-        sim.init();
+
 //        ctx.cars.keySet().forEach(v->{
 //        	System.out.println(v+":"+planner.showPath(v));
 //        });

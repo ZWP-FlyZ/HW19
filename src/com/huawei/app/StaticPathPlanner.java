@@ -240,6 +240,13 @@ public class StaticPathPlanner implements Planner {
 	}
 
 
+	@Override
+	public int onInitCarStartTime(int carId) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+
 
 
 }

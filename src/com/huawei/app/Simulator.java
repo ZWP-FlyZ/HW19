@@ -110,12 +110,15 @@ public class Simulator {
     	this.planner = p;
     }
     
+
+
+    
     /**
      * >初始化当前规划器
      * >
      */
-    public void init() {
-    	// 初始化所有CarStatus
+    private void init() {
+      	// 初始化所有CarStatus
     	// 将所有准备上路的车加入的路口调度队列当中
     	statues = new HashMap<>();
     	cars.values().forEach(car->{
@@ -123,7 +126,9 @@ public class Simulator {
     					car.getStartTime());
     		// 启动行为
     		cs.action=CarActions.START;
-    		cs.curSAT=car.getStartTime();
+    		int v = planner.onInitCarStartTime(car.getCarId());
+    		// 更新起始时间
+    		cs.curSAT=v<car.getStartTime()?car.getStartTime():v;
     		
     		// 当前道路ID设置为-1，
     		cs.curRoadId=-1;
@@ -144,8 +149,8 @@ public class Simulator {
     	// 设置系统时间为车辆最开始上路时间
     	if(startQue.size()>0)
     		curSAT = startQue.peek().curSAT;
-    	
     }
+    
     
     /**
      * >执行模拟过程，返回模拟总时间
@@ -153,6 +158,10 @@ public class Simulator {
      * @return
      */
     public int run() {
+    	
+    	// 
+    	init();
+    
     	System.err.println("Simulator start run,AST="+curSAT+", car.size="+remCarCot);
     	CarStatus cs = null;
     	boolean onRoadPassFlag = true;
@@ -169,11 +178,13 @@ public class Simulator {
     			// 更新cs的状态
     			
     			cs = updateRunningCarStatus(cs);
-    			onRoadPassFlag = cs.action == CarActions.SCHEDULING;
+    			onRoadPassFlag = cs.action != CarActions.RUNNING;
     			if(cs.action==CarActions.BLOCK_SCHEDULING) {
     				// 车辆以处于变道区，提前进行路口规划
     				cs.action=CarActions.SCHEDULING;
     				cs = schedulingCarStatus(cs);
+    				if(cs.action==CarActions.RUNNING)
+    					planner.onPassedCross(cs.carId, cs.frmCrossId, simStatus);
     			}
     			
     			if(cs.action==CarActions.RUNNING)

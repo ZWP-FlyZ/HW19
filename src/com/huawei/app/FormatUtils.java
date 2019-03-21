@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.huawei.app.ana.AnaCarPath;
 import com.huawei.app.model.Answer;
 import com.huawei.app.model.Car;
 import com.huawei.app.model.CarStatus;
@@ -35,6 +36,23 @@ public class FormatUtils {
 			res = res.stream()
 					.filter(v->!v.contains("#")&&v.length()>2)
 					.map(v->v.replaceAll("\\(|\\)",""))
+					.map(v->v.replaceAll(" ",""))
+					.collect(Collectors.toList());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return res;
+	}
+	
+	
+	public static List<String> loadAnarec(String path){
+		List<String> res = null;
+		try {
+			res =Files.readAllLines(Paths.get(path),
+					StandardCharsets.UTF_8);
+			res = res.stream()
+					.filter(v->!v.contains("#")&&v.length()>2)
 					.map(v->v.replaceAll(" ",""))
 					.collect(Collectors.toList());
 		} catch (IOException e) {
@@ -93,6 +111,20 @@ public class FormatUtils {
 		.forEach((v)->{
 			int[] p = strs2ints(v);
 			res.put(p[0], new Answer(p));
+		});
+		return res;
+	}
+	
+	
+	public static Map<Integer,AnaCarPath> converAnaCarPath(List<String> lines){
+		if(lines==null) return null;
+		Map<Integer,AnaCarPath> res = new HashMap<>();
+		lines.stream()
+		.filter(v->v.length()>1)
+		.map(v->v.split(","))
+		.forEach((v)->{
+			int[] p = strs2ints(v);
+			res.put(p[0], new AnaCarPath(p));
 		});
 		return res;
 	}
